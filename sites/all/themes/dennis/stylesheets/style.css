@@ -1,0 +1,68 @@
+@import url(global/normalize.css);
+.clearfix:before, .clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+
+/**
+* Typography: Headings, body text, lists, code, and more for a versatile and durable typography system.
+*/
+body {
+  font-family: Verdana, Tahoma, "DejaVu Sans", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+a:link {
+  color: #2090b4;
+}
+a:visited {
+  color: #2090b4;
+}
+
+ul ul,
+ul ol,
+ol ol,
+ol ul {
+  margin-bottom: 0;
+}
+
+hr {
+  height: 1px;
+  border: 1px solid #666;
+  padding-bottom: -1px;
+  margin: 1.5em 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
+::-moz-selection {
+  background: #66b360;
+  color: white;
+  text-shadow: none;
+}
+
+::selection {
+  background: #66b360;
+  color: white;
+  text-shadow: none;
+}
+
+/**
+* Form elements: Inputs, buttons, etc.
+*/
+input,
+button,
+select,
+textarea {
+  font-family: Arial, Helvetica, "Nimbus Sans L", sans-serif;
+}
