@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Dennis Main feature.
+ */
+
+include_once 'dennis_main.features.inc';
