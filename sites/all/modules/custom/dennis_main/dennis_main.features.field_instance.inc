@@ -99,7 +99,7 @@ function dennis_main_field_default_field_instances() {
     'widget' => array(
       'module' => 'image',
       'settings' => array(
-        'preview_image_style' => 'thumbnail',
+        'preview_image_style' => '',
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',

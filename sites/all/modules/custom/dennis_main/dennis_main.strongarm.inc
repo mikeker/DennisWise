@@ -100,7 +100,7 @@ function dennis_main_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'theme_default';
-  $strongarm->value = 'bartik';
+  $strongarm->value = 'dennis';
   $export['theme_default'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -144,7 +144,7 @@ function dennis_main_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'user_picture_style';
-  $strongarm->value = 'thumbnail';
+  $strongarm->value = '';
   $export['user_picture_style'] = $strongarm;
 
   $strongarm = new stdClass();
