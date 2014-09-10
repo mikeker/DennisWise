@@ -5,3 +5,13 @@
 .dennis-fluid-column {
   margin-left: 200px;
 }
+
+/* Clearfix */
+.dennis-two-col:before,
+.dennis-two-col:after {
+    content: " "; /* 1 */
+    display: table; /* 2 */
+}
+.dennis-two-col:after {
+    clear: both;
+}
