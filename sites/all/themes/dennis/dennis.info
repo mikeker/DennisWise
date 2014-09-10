@@ -29,7 +29,7 @@ stylesheets[print][] = 'stylesheets/print.css'
 ; ========================================
 ; Scripts
 ; ========================================
-scripts[] = 'js/dennis.js';
+scripts[] = 'js/dennis.js'
 
 ; If installed through Bower
 ; scripts[] = 'components/formalize/assets/js/jquery.formalize.min.js'
