@@ -63,7 +63,7 @@ function photos_field_default_field_instances() {
         'module' => 'image',
         'settings' => array(
           'image_link' => '',
-          'image_style' => 'small_responsive',
+          'image_style' => 'photo_small',
         ),
         'type' => 'image',
         'weight' => 2,
@@ -95,7 +95,7 @@ function photos_field_default_field_instances() {
       'active' => 1,
       'module' => 'image',
       'settings' => array(
-        'preview_image_style' => 'small_responsive',
+        'preview_image_style' => 'photo_small',
         'progress_indicator' => 'throbber',
       ),
       'type' => 'image_image',
