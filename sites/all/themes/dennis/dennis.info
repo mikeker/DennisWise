@@ -13,6 +13,9 @@ regions[content]      = 'Main Region'
 regions[main_suffix]  = 'Main Region Suffix'
 regions[footer]       = 'Footer'
 
+; Path to Panels plugins
+plugins[panels][layouts] = layouts
+
 ; ========================================
 ; Stylesheets
 ; ========================================

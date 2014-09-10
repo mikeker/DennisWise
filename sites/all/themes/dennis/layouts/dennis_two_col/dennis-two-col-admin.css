@@ -1,0 +1,7 @@
+.dennis-fixed-column {
+  width: 200px;
+  float: left;
+}
+.dennis-fluid-column {
+  margin-left: 200px;
+}
