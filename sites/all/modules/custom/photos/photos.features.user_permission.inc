@@ -10,24 +10,6 @@
 function photos_user_default_permissions() {
   $permissions = array();
 
-  // Exported permission: 'administer responsive image settings'.
-  $permissions['administer responsive image settings'] = array(
-    'name' => 'administer responsive image settings',
-    'roles' => array(
-      'administrator' => 'administrator',
-    ),
-    'module' => 'borealis_ri',
-  );
-
-  // Exported permission: 'administer responsive image styles'.
-  $permissions['administer responsive image styles'] = array(
-    'name' => 'administer responsive image styles',
-    'roles' => array(
-      'administrator' => 'administrator',
-    ),
-    'module' => 'borealis_ri',
-  );
-
   // Exported permission: 'create photo content'.
   $permissions['create photo content'] = array(
     'name' => 'create photo content',
