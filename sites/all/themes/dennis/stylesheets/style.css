@@ -11,9 +11,9 @@
 * Typography: Headings, body text, lists, code, and more for a versatile and durable typography system.
 */
 body {
-  font-family: Verdana, Tahoma, "DejaVu Sans", sans-serif;
-  font-size: 16px;
-  line-height: 24px;
+  font-family: "Courier New", "DejaVu Sans Mono", monospace, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 a:link {
@@ -34,7 +34,7 @@ hr {
   height: 1px;
   border: 1px solid #666;
   padding-bottom: -1px;
-  margin: 1.5em 0;
+  margin: 1.42857em 0;
 }
 
 strong {
@@ -64,5 +64,51 @@ input,
 button,
 select,
 textarea {
-  font-family: Arial, Helvetica, "Nimbus Sans L", sans-serif;
+  font-family: "Courier New", "DejaVu Sans Mono", monospace, sans-serif;
+}
+
+.dennis-two-col .dennis-fixed-column {
+  width: 200px;
+  float: left;
+}
+.dennis-two-col .dennis-fixed-column:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.dennis-two-col .dennis-fluid-column {
+  margin-left: 225px;
+}
+.dennis-two-col .dennis-fluid-column:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#main {
+  padding: 35px 20px;
+}
+
+.dennis-fixed-column {
+  text-align: right;
+}
+.dennis-fixed-column h2 {
+  margin-top: 0;
+}
+
+ul.menu {
+  margin: 0;
+  padding: 0;
+  text-align: right;
+}
+ul.menu li {
+  list-style: none;
+}
+ul.menu a, ul.menu a:visited {
+  text-decoration: none;
+  color: #333;
+}
+ul.menu a:hover, ul.menu a:active, ul.menu a.active-trail, ul.menu a:visited:hover, ul.menu a:visited:active, ul.menu a:visited.active-trail {
+  color: #000;
+  font-weight: bold;
 }

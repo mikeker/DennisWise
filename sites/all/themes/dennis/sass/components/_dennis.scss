@@ -1,0 +1,43 @@
+//
+// Main styling for DennisWise.com.
+//
+// If this file starts getting out of hand, then we'll break it down into
+// smaller components. But until that happens, most of the styling for the site
+// will be in  on nice, monolithic file.
+
+#main {
+  padding: 35px 20px;
+}
+
+// Fixed column
+.dennis-fixed-column {
+  text-align: right;
+
+  h2 {
+    margin-top: 0;
+  }
+}
+
+.dennis-fluid-column {
+
+}
+
+// Main nav menu
+ul.menu {
+  margin: 0;
+  padding: 0;
+  text-align: right;
+
+  li {
+    list-style: none;
+  }
+
+  a, a:visited {
+    text-decoration: none;
+    color: #333;
+    &:hover, &:active, &.active-trail {
+      color: #000;
+      font-weight: bold;
+    }
+  }
+}

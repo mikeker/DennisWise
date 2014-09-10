@@ -10,6 +10,7 @@
     <?php print $content['fixed']; ?>
   </section>
   <section class="dennis-fluid-column">
+    <noscript>This site requires JavaScript.</noscript>
     <?php print $content['fluid']; ?>
   </section>
 </div>
