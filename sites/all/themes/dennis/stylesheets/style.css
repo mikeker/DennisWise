@@ -112,3 +112,7 @@ ul.menu a:hover, ul.menu a:active, ul.menu a.active-trail, ul.menu a:visited:hov
   color: #000;
   font-weight: bold;
 }
+
+.photos-listing {
+  display: none;
+}

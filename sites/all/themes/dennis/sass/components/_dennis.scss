@@ -18,10 +18,6 @@
   }
 }
 
-.dennis-fluid-column {
-
-}
-
 // Main nav menu
 ul.menu {
   margin: 0;
@@ -40,4 +36,9 @@ ul.menu {
       font-weight: bold;
     }
   }
+}
+
+// Photos
+.photos-listing {
+  display: none;
 }
