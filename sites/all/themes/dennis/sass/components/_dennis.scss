@@ -6,17 +6,26 @@
 // will be in  on nice, monolithic file.
 
 #main {
-  padding: 35px 20px;
+  // padding: 35px 20px;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 // Fixed column
 .dennis-fixed-column {
   text-align: right;
+  position: fixed;
+  width: $fixed-width;
+  top: $main-padding-vert;
+  left: $main-padding-horiz;
 
   h2 {
     margin-top: 0;
   }
 }
+
+// Fluid column
 
 // Main nav menu
 ul.menu {
