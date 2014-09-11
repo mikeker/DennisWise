@@ -6,42 +6,63 @@
 // will be in  on nice, monolithic file.
 
 // Fixed column
-.fixed-column {
-  text-align: right;
+.dennis-two-col {
+  .fixed-column {
+    text-align: right;
 
-  h2 {
-    margin-top: 0;
-  }
-}
-
-// Fluid column image holder
-.fluid-column {
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-color: $white;
-}
-
-// Main nav menu
-ul.menu {
-  margin: 0;
-  padding: 0;
-  text-align: right;
-
-  li {
-    list-style: none;
-  }
-
-  a, a:visited {
-    text-decoration: none;
-    color: #333;
-    &:hover, &:active, &.active-trail {
-      color: #000;
-      font-weight: bold;
+    h2 {
+      margin-top: 0;
     }
   }
-}
 
-// Photos
-.photos-listing {
-  display: none;
+  //
+  // Photo slide show styling
+  //
+  .fluid-column {
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-color: $white;
+  }
+  // This is the data we get from Views.
+  .photos-listing {
+    display: none;
+  }
+  .photos-forward, .photos-backward {
+    position: absolute;
+    width: 50%;
+    top: 0;
+    bottom: 0;
+  }
+  .photos-forward {
+    right: 0;
+    &:hover {
+      cursor: url(../images/right.cur), default;
+    }
+  }
+  .photos-backward {
+    left: 0;
+    &:hover {
+      cursor: url(../images/left.cur), default;
+    }
+  }
+
+  // Main nav menu
+  ul.menu {
+    margin: 0;
+    padding: 0;
+    text-align: right;
+
+    li {
+      list-style: none;
+    }
+
+    a, a:visited {
+      text-decoration: none;
+      color: #333;
+      &:hover, &:active, &.active-trail {
+        color: #000;
+        font-weight: bold;
+      }
+    }
+  }
 }

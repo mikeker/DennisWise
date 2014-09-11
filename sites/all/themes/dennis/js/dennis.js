@@ -49,14 +49,15 @@ var Dennis = Dennis || { photos: {} };
     this.$loading = $('<div class="photos-loading">Loading...</div>').prependTo(this.$display);
 
     // Add forward/back click areas
+    var self = this;
     $('<div class="photos-forward"></div><div class="photos-backward"></div>').appendTo(this.$display);
     $('.photos-forward', this.$display).click(function() {
-      this.next();
-      this.show();
+      self.next();
+      self.show();
     });
     $('.photos-backward', this.$display).click(function() {
-      this.prev();
-      this.show();
+      self.prev();
+      self.show();
     });
 
     this.init.completed = true;
@@ -84,6 +85,15 @@ var Dennis = Dennis || { photos: {} };
     }
 
     this.hideLoadingMessage();
+
+    // Reset the display element size, else we get ever-shrinking images.
+    this.$display.css({
+      width: 'auto',
+      height: 'auto'
+    })
+
+    // Now set the new image as the area background and resize the display
+    // element.
     var size = this.getImageSize();
     this.$display.css({
       backgroundImage: 'url(' + this.list[this.curr] + ')',
@@ -130,12 +140,26 @@ var Dennis = Dennis || { photos: {} };
   /**
    * Increments the current index to the next photo (with looping).
    */
-  Dennis.photos.next = function() {};
+  Dennis.photos.next = function() {
+    if (this.curr == this.list.length - 1) {
+      this.curr = 0;
+    }
+    else {
+      this.curr++;
+    }
+  };
 
   /**
    * Decrements the current index to the previous photo (with looping).
    */
-  Dennis.photos.prev = function() {};
+  Dennis.photos.prev = function() {
+    if (this.curr == 0) {
+      this.curr = this.list.length - 1;
+    }
+    else {
+      this.curr--;
+    }
+  };
 
   /**
    * Replaces the main image area with thumbnails.
