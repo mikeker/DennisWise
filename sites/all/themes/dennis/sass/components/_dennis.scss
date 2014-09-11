@@ -5,20 +5,9 @@
 // smaller components. But until that happens, most of the styling for the site
 // will be in  on nice, monolithic file.
 
-#main {
-  // padding: 35px 20px;
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
 // Fixed column
-.dennis-fixed-column {
+.fixed-column {
   text-align: right;
-  position: fixed;
-  width: $fixed-width;
-  top: $main-padding-vert;
-  left: $main-padding-horiz;
 
   h2 {
     margin-top: 0;

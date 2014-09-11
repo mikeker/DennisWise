@@ -2,13 +2,26 @@
 // Sass partial with the layout code for the Dennis Two Col panels layout.
 //
 .dennis-two-col{
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  // Places a fixed width column on the left and a fluid width column on the
+  // right. The fluid column will expand to include all the available viewport
+  // to show the largest image possible.
   .fixed-column {
     width: $fixed-col-width;
-    float: left;
+    position: fixed;
+    top: $main-padding-vert;
     @include clearfix();
   }
+
   .fluid-column {
-    margin-left: $fixed-col-width + $padding;
+    position: fixed;
+    left: $fixed-col-width + $padding;
+    top: $main-padding-vert;
+    bottom: $main-padding-vert;
+    right: $main-padding-horiz;
     @include clearfix();
   }
 }
