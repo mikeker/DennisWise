@@ -111,13 +111,13 @@ var Dennis = Dennis || { photos: {} };
           self.loading.fadeOut(350);
         }
 
-        // Store aspect ratio for easy access.
+        // Store aspect ratio for easy access later.
         this.aspectRatio = this.width / this.height;
       }
 
       // Load image from the server. Since it's not part of the browser DOM, it
-      // doesn't show on the screen. But it IS cached in the browser cache when
-      // it is added to the DOM or CSS.
+      // doesn't show on the screen. But it IS cached in the browser cache for
+      // quick display when it is used in the DOM or CSS.
       image.src = this.list[i];
 
       // Keep in image object in scope so that it continues loading after this
@@ -126,7 +126,6 @@ var Dennis = Dennis || { photos: {} };
     }
 
     this.preloaded.completed = true;
-    console.log(Dennis);
   };
 
 }) (jQuery);
