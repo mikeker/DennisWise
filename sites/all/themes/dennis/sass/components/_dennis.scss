@@ -14,7 +14,12 @@
   }
 }
 
-// Fluid column
+// Fluid column image holder
+.fluid-column {
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-color: $white;
+}
 
 // Main nav menu
 ul.menu {
