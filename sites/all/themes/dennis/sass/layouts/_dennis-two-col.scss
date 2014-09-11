@@ -2,13 +2,13 @@
 // Sass partial with the layout code for the Dennis Two Col panels layout.
 //
 .dennis-two-col{
-  .dennis-fixed-column {
-    width: 200px;
+  .fixed-column {
+    width: $fixed-col-width;
     float: left;
     @include clearfix();
   }
-  .dennis-fluid-column {
-    margin-left: 225px;
+  .fluid-column {
+    margin-left: $fixed-col-width + $padding;
     @include clearfix();
   }
 }

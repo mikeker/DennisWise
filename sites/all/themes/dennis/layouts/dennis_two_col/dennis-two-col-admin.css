@@ -1,8 +1,8 @@
-.dennis-fixed-column {
+.fixed-column {
   width: 200px;
   float: left;
 }
-.dennis-fluid-column {
+.fluid-column {
   margin-left: 200px;
 }
 
