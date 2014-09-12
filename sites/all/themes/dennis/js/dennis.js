@@ -45,20 +45,23 @@ var Dennis = Dennis || { photos: {} };
     // This the the HTML element that we're putting the images in
     this.$display = $('.dennis-two-col .fluid-column');
 
-    // Add a "Loading..." message to the photo area.
-    this.$loading = $('<div class="photos-loading">Loading...</div>').prependTo(this.$display);
-
     // Add forward/back click areas
     var self = this;
-    $('<div class="photos-forward"></div><div class="photos-backward"></div>').appendTo(this.$display);
-    $('.photos-forward', this.$display).click(function() {
-      self.next();
-      self.show();
-    });
-    $('.photos-backward', this.$display).click(function() {
-      self.prev();
-      self.show();
-    });
+    this.$forward = $('<div class="photos-forward">')
+      .appendTo(this.$display)
+      .click(function() {
+        self.next();
+        self.show();
+      });
+    this.$backward = $('<div class="photos-backward">')
+      .appendTo(this.$display)
+      .click(function() {
+        self.prev();
+        self.show();
+      });
+
+    // Add a "Loading..." message to the photo area.
+    this.$loading = $('<div class="photos-loading">Loading...</div>').appendTo(this.$display);
 
     this.init.completed = true;
   };
@@ -74,12 +77,11 @@ var Dennis = Dennis || { photos: {} };
    * Set the current image as the background of the "fluid" layout region.
    */
   Dennis.photos.show = function() {
-    this.$display.css('background-image', 'none');
+    var self = this;
 
     // Wait until the image has loaded.
     if (!this.preloaded[this.curr].loaded) {
       this.showLoadingMessage();
-      var self = this;
       window.setTimeout(function() { self.show(); }, 100);
       return;
     }
