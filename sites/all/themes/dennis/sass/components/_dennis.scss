@@ -22,6 +22,7 @@
     background-repeat: no-repeat;
     background-size: contain;
     background-color: $white;
+    @include single-transition(all, .5s, ease);
   }
   // This is the data we get from Views.
   .photos-listing {
@@ -32,6 +33,8 @@
     width: 50%;
     top: 0;
     bottom: 0;
+    background-color: $white;
+    opacity: 0;
   }
   .photos-forward {
     right: 0;
