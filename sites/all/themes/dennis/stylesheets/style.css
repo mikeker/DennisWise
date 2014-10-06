@@ -67,52 +67,85 @@ textarea {
   font-family: "Courier New", "DejaVu Sans Mono", monospace, sans-serif;
 }
 
-.dennis-two-col .dennis-fixed-column {
+.dennis-two-col {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.dennis-two-col .fixed-column {
   width: 200px;
-  float: left;
+  position: fixed;
+  top: 35px;
 }
-.dennis-two-col .dennis-fixed-column:after {
+.dennis-two-col .fixed-column:after {
   content: "";
   display: table;
   clear: both;
 }
-.dennis-two-col .dennis-fluid-column {
-  margin-left: 225px;
+.dennis-two-col .fluid-column {
+  position: fixed;
+  left: 225px;
+  top: 35px;
+  bottom: 35px;
+  right: 20px;
 }
-.dennis-two-col .dennis-fluid-column:after {
+.dennis-two-col .fluid-column:after {
   content: "";
   display: table;
   clear: both;
 }
 
-#main {
-  padding: 35px 20px;
-}
-
-.dennis-fixed-column {
+.dennis-two-col .fixed-column {
   text-align: right;
 }
-.dennis-fixed-column h2 {
+.dennis-two-col .fixed-column h2 {
   margin-top: 0;
 }
-
-ul.menu {
+.dennis-two-col .fluid-column {
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-color: white;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+.dennis-two-col .photos-listing {
+  display: none;
+}
+.dennis-two-col .photos-forward, .dennis-two-col .photos-backward {
+  position: absolute;
+  width: 50%;
+  top: 0;
+  bottom: 0;
+  background-color: white;
+  opacity: 0;
+}
+.dennis-two-col .photos-forward {
+  right: 0;
+}
+.dennis-two-col .photos-forward:hover {
+  cursor: url(../images/right.cur), default;
+}
+.dennis-two-col .photos-backward {
+  left: 0;
+}
+.dennis-two-col .photos-backward:hover {
+  cursor: url(../images/left.cur), default;
+}
+.dennis-two-col ul.menu {
   margin: 0;
   padding: 0;
   text-align: right;
 }
-ul.menu li {
+.dennis-two-col ul.menu li {
   list-style: none;
 }
-ul.menu a, ul.menu a:visited {
+.dennis-two-col ul.menu a, .dennis-two-col ul.menu a:visited {
   text-decoration: none;
   color: #333;
 }
-ul.menu a:hover, ul.menu a:active, ul.menu a.active-trail, ul.menu a:visited:hover, ul.menu a:visited:active, ul.menu a:visited.active-trail {
+.dennis-two-col ul.menu a:hover, .dennis-two-col ul.menu a:active, .dennis-two-col ul.menu a.active-trail, .dennis-two-col ul.menu a:visited:hover, .dennis-two-col ul.menu a:visited:active, .dennis-two-col ul.menu a:visited.active-trail {
   color: #000;
   font-weight: bold;
-}
-
-.photos-listing {
-  display: none;
 }
