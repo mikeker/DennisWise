@@ -37,6 +37,24 @@ function dennis_main_user_default_permissions() {
     'module' => 'views',
   );
 
+  // Exported permission: 'access backup and migrate'.
+  $permissions['access backup and migrate'] = array(
+    'name' => 'access backup and migrate',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'backup_migrate',
+  );
+
+  // Exported permission: 'access backup files'.
+  $permissions['access backup files'] = array(
+    'name' => 'access backup files',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'backup_migrate',
+  );
+
   // Exported permission: 'access comments'.
   $permissions['access comments'] = array(
     'name' => 'access comments',
@@ -120,6 +138,15 @@ function dennis_main_user_default_permissions() {
       'administrator' => 'administrator',
     ),
     'module' => 'panels',
+  );
+
+  // Exported permission: 'administer backup and migrate'.
+  $permissions['administer backup and migrate'] = array(
+    'name' => 'administer backup and migrate',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'backup_migrate',
   );
 
   // Exported permission: 'administer blocks'.
@@ -401,6 +428,15 @@ function dennis_main_user_default_permissions() {
     'module' => 'node',
   );
 
+  // Exported permission: 'delete backup files'.
+  $permissions['delete backup files'] = array(
+    'name' => 'delete backup files',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'backup_migrate',
+  );
+
   // Exported permission: 'delete own article content'.
   $permissions['delete own article content'] = array(
     'name' => 'delete own article content',
@@ -527,6 +563,15 @@ function dennis_main_user_default_permissions() {
     'module' => 'features',
   );
 
+  // Exported permission: 'perform backup'.
+  $permissions['perform backup'] = array(
+    'name' => 'perform backup',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'backup_migrate',
+  );
+
   // Exported permission: 'post comments'.
   $permissions['post comments'] = array(
     'name' => 'post comments',
@@ -544,6 +589,15 @@ function dennis_main_user_default_permissions() {
       'administrator' => 'administrator',
     ),
     'module' => 'features',
+  );
+
+  // Exported permission: 'restore from backup'.
+  $permissions['restore from backup'] = array(
+    'name' => 'restore from backup',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'backup_migrate',
   );
 
   // Exported permission: 'revert revisions'.
