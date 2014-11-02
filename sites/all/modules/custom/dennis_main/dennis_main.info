@@ -122,7 +122,6 @@ features[variable][] = node_submitted_page
 features[variable][] = path_alias_whitelist
 features[variable][] = site_default_country
 features[variable][] = site_mail
-features[variable][] = site_name
 features[variable][] = theme_default
 features[variable][] = update_notify_emails
 features[variable][] = user_admin_role
