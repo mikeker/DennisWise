@@ -8,7 +8,17 @@
  * Implements hook_perm
  */
 function ftp_gallery_permission() {
-  return array('view FTP galleries', 'administer FTP galleries');
+  return array(
+    'view FTP galleries' => array(
+      'title' => t('View FTP Galleries'),
+      'description' => t('Allows users to view FTP Galleries.'),
+    ),
+    'administer FTP galleries' => array(
+      'title' => t('Administer FTP Galleries'),
+      'description' => t('Allows users to administer FTP Galleries. NOTE: Allows the user to create and delete files and directories within the public files directory.'),
+      'restrict access' => TRUE,
+    ),
+  );
 }
 
 /**

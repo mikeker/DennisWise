@@ -10,6 +10,15 @@
 function photos_user_default_permissions() {
   $permissions = array();
 
+  // Exported permission: 'administer FTP galleries'.
+  $permissions['administer FTP galleries'] = array(
+    'name' => 'administer FTP galleries',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'ftp_gallery',
+  );
+
   // Exported permission: 'create photo content'.
   $permissions['create photo content'] = array(
     'name' => 'create photo content',
@@ -57,6 +66,16 @@ function photos_user_default_permissions() {
     'name' => 'edit terms in categories',
     'roles' => array(),
     'module' => 'taxonomy',
+  );
+
+  // Exported permission: 'view FTP galleries'.
+  $permissions['view FTP galleries'] = array(
+    'name' => 'view FTP galleries',
+    'roles' => array(
+      'anonymous user' => 'anonymous user',
+      'authenticated user' => 'authenticated user',
+    ),
+    'module' => 'ftp_gallery',
   );
 
   return $permissions;
