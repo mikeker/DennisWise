@@ -1,0 +1,245 @@
+<?php
+/**
+ * @file
+ * Provides infrastructure to build photo galleries from a folder of uploaded photos
+ */
+
+/**
+ * Implements hook_perm
+ */
+function ftp_gallery_permission() {
+  return array('view FTP galleries', 'administer FTP galleries');
+}
+
+/**
+ * Implements hook_menu()
+ */
+function ftp_gallery_menu() {
+  $items = array();
+  $gallery_path = variable_get('ftp_gallery_path', 'gallery');
+  $depth = substr_count($gallery_path, '/');
+
+  $items[$gallery_path] = array(
+    'title' => 'Galleries',
+    'description' => 'Listing of all photo galleries',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'ftp_gallery_list',
+    'access arguments' => array('view FTP galleries'),
+  );
+  $items["$gallery_path/%"] = array(
+    'title' => 'Photo gallery',
+    'description' => 'Photo gallery',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'ftp_gallery_show',
+    'page arguments' => array(1 + $depth),
+    'access arguments' => array('view FTP galleries'),
+  );
+
+  // Admin items
+  $items['admin/config/media/ftp_gallery'] = array(
+    'title' => 'FTP Gallery settings',
+    'description' => 'Administer FTP galleries',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ftp_gallery_admin_form'),
+    'access arguments' => array('administer FTP galleries'),
+    'file' => 'ftp_gallery.admin.inc',
+  );
+  $items['admin/config/media/ftp_gallery/admin'] = array(
+    'title' => 'Administer FTP galleries',
+    'description' => 'Administer FTP galleries',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/config/media/ftp_gallery/add'] = array(
+    'title' => 'Add an FTP gallery',
+    'description' => 'Creates a new FTP gallery',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ftp_gallery_add_gallery_form'),
+    'access arguments' => array('administer FTP galleries'),
+    'file' => 'ftp_gallery.admin.inc',
+  );
+  $items['admin/config/media/ftp_gallery/%/delete'] = array(
+    'title' => 'Delete FTP galleries',
+    'description' => 'Delete FTP galleries',
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ftp_gallery_delete_form', 3),
+    'access arguments' => array('administer FTP galleries'),
+    'file' => 'ftp_gallery.admin.inc',
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_theme
+ * @param $existing
+ * @param $type
+ * @param $theme
+ * @param $path
+ * @return array
+ */
+function ftp_gallery_theme($existing, $type, $theme, $path) {
+  return array(
+    'ftp_gallery' => array(
+      'variables' => array('images' => NULL, 'gallery' => NULL),
+      'template' => 'ftp-gallery',
+    ),
+  );
+}
+
+/**
+ * Displays a given gallery
+ */
+function ftp_gallery_show($name) {
+  $galleries = _ftp_gallery_get_galleries();
+
+  // Normalize the gallery name.
+  $name = _ftp_gallery_url_to_name($name);
+
+  if (!isset($galleries[$name])) {
+    drupal_not_found();
+    return;
+  }
+  $gallery = $galleries[$name];
+
+  // Collect all files in the gallery directory and sort by filename
+  $images = file_scan_directory($gallery['uri'], '`\.(jpg|jpeg|png|gif|bmp)$`');
+  ksort($images);
+
+  return theme('ftp_gallery', array('images' => $images, 'gallery' => $gallery));
+}
+
+function ftp_gallery_list() {
+  global $base_url;
+  $galleries = _ftp_gallery_get_galleries();
+  $links = array();
+  foreach ($galleries as $name => $gallery) {
+    $links[] = l($name, $base_url . _ftp_gallery_name_to_fullurl($name));
+  }
+  return theme('item_list', array('items' => $links));
+}
+
+/**
+ * Builds variables for use in the ftp-template.tpl.php template.
+ */
+function template_preprocess_ftp_gallery(&$variables) {
+  $images = $variables['images'];
+  $gallery = $variables['gallery'];
+  $gallery_items = array();
+
+  // Collect image style info, if it has been set.
+  $thumb_id = variable_get('ftp_gallery_imagestyle_thumb', 0);
+  $full_id = variable_get('ftp_gallery_imagestyle_full', 0);
+
+  if (!$full_id || !$thumb_id) {
+    drupal_set_message(t('The thumbnail and fullsize image styles must be configured on the !link admin page before you can view this gallery.',
+      array('!link' => l('FTP Gallery', 'admin/config/media/ftp_gallery'))
+    ));
+    return;
+  }
+
+  foreach ($images as $image) {
+    if (!file_valid_uri($image->uri)) {
+      continue;
+    }
+    if ($thumb_id == $full_id) {
+      // Return a list of images without links.
+      $gallery_items[] = theme('image_style', array(
+        'style_name' => $thumb_id,
+        'path' => $image->uri,
+        'title' => $image->name,
+      ));
+    }
+    else {
+      // Return a list of thumbnails linked to fullsize images.
+      $thumb = theme('image_style', array(
+        'style_name' => $thumb_id,
+        'path' => $image->uri,
+        'title' => $image->name,
+      ));
+      $url = image_style_url($full_id, $image->uri);
+      $gallery_items[] = l($thumb, $url, array('html' => TRUE));
+    }
+  }
+
+  $variables['gallery_items'] = $gallery_items;
+}
+
+/******************************************************************************
+ *                              Helper functions
+ ******************************************************************************/
+
+/**
+ * Converts a human-readable gallery name to a URL relative to the Drupal root
+ */
+function _ftp_gallery_name_to_fullurl($name) {
+  $name = _ftp_gallery_name_to_url($name);
+  return base_path()
+    . variable_get('ftp_gallery_path', '')
+    . '/'
+    . $name;
+}
+
+/**
+ * Converts a human-readable gallery name to a string usable in a URL
+ *
+ * TODO: are there other characters that need to be converted?
+ */
+function _ftp_gallery_name_to_url($name) {
+  return str_replace(' ', '-', $name);
+}
+
+/**
+ * Reverses _ftp_gallery_name_to_url().
+ */
+function _ftp_gallery_url_to_name($url) {
+  return str_replace('-', ' ', $url);
+}
+
+
+/**
+ * Converts a human-readable gallery name to a full path to the photos.
+ */
+function _ftp_gallery_name_to_dir($name) {
+  $name = str_replace(' ', '_', $name);
+  $files_dir = variable_get('file_public_path', conf_path() . '/files');
+
+  // Need at least a directory separator
+  $g_dir = variable_get('ftp_gallery_directory', '');
+  if (empty($g_dir)) {
+    return "$files_dir/$name";
+  }
+  else {
+    return "$files_dir/$g_dir/$name";
+  }
+}
+
+/**
+ * Converts a human-readable gallery name to a URI.
+ */
+function _ftp_gallery_name_to_uri($name) {
+  $name = str_replace(' ', '_', $name);
+  $scheme = file_default_scheme() . '://';
+
+  // Need at least a directory separator
+  $g_dir = variable_get('ftp_gallery_directory', '');
+  if (empty($g_dir)) {
+    return "$scheme$name";
+  }
+  else {
+    return "$scheme$g_dir/$name";
+  }
+}
+
+function _ftp_gallery_get_galleries() {
+  $galleries = variable_get('ftp_galleries', 0);
+  if (empty($galleries)) {
+    return array();
+  }
+  else {
+    return $galleries;
+  }
+}

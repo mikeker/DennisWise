@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * Implements hook_install()
+ */
+function ftp_gallery_install() {
+  // Setup FTP Gallery variables with default values
+  variable_set('ftp_galleries', array());
+  variable_set('ftp_gallery_path', 'gallery');
+  variable_set('ftp_gallery_directory', 'photos/galleries');
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function ftp_gallery_uninstall() {
+  variable_del('ftp_galleries');
+  variable_del('ftp_gallery_path');
+  variable_del('ftp_gallery_directory');
+  variable_del('ftp_gallery_imagestyle_thumb');
+  variable_del('ftp_gallery_imagestyle_full');
+}

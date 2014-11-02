@@ -1,0 +1,4 @@
+name = FTP Gallery
+description = Builds a gallery based on photos upload via FTP
+core = 7.x
+dependencies[] = image
