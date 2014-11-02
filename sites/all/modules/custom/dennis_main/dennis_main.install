@@ -1,0 +1,7 @@
+<?php
+/**
+ * Installs FTP Gallery module.
+ */
+function dennis_main_update_7001(&$sandbox) {
+  module_enable(array('ftp_gallery'));
+}
