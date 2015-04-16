@@ -1,3 +1,4 @@
 name = Dropbox API
 description = A thin wrapper around the Dropbox API
 core = 7.x
+dependencies[] = libraries
