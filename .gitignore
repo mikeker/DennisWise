@@ -1,5 +1,10 @@
 # Ignore configuration files that may contain sensitive information.
-sites/*/settings*.php
+sites/*/*.settings.php
+
+# The public settings.php file has site-wide settings, but no database or SDK
+# credentials. Those are loaded at the end of settings.php, which allows
+# different credentials for different evironments.
+!sites/default/settings.php
 
 # Ignore paths that contain user-generated content.
 sites/*/files
