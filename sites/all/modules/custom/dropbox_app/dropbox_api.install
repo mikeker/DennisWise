@@ -12,8 +12,8 @@ function dropbox_app_requirements($phase) {
   if ('runtime' == $phase) {
     // Check that we have a APP key and secret, otherwise we can't communicate
     // with Dropbox.
-    $key = variable_get('dropbox_app_app_key', '');
-    $secret = variable_get('dropbox_app_app_secret', '');
+    $key = variable_get('dropbox_app_key', '');
+    $secret = variable_get('dropbox_app_secret', '');
     if (empty($key) || empty($secret)) {
       $requirements['dropbox_api'] = array(
         'title' => $t('Dropbox App'),

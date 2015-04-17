@@ -23,8 +23,8 @@ class DropboxApp {
       }
 
       $appInfo = Dropbox\AppInfo::loadFromJson(array(
-        'key' => variable_get('dropbox_app_app_key', ''),
-        'secret' => variable_get('dropbox_app_app_secret', ''),
+        'key' => variable_get('dropbox_app_key', ''),
+        'secret' => variable_get('dropbox_app_secret', ''),
       ));
     }
 
