@@ -56,34 +56,21 @@ class DropboxApp {
     ));
 
     $csrfTokenStore = new Dropbox\ArrayEntryStore($_SESSION, 'dropbox-auth-csrf-token');
-    $this->webAuth = new Dropbox\WebAuth($this->appInfo, $this->clientId, $this->redirectUrl, $csrfTokenStore);
-  }
-
-  protected function getWebAuth() {
-    $appInfo = dropbox_app_load_sdk();
-    $clientId = 'drupal-photo-gallery/1.0';
-
-    // Local dev.
-    $redirectUrl = 'https://vagrant.denniswise.com/dropbox_api/authorize/finish';
-
-    $csrfTokenStore = new Dropbox\ArrayEntryStore($_SESSION, 'dropbox-auth-csrf-token');
-    return new Dropbox\WebAuth($appInfo, $clientId, $redirectUrl, $csrfTokenStore);
+    $this->webAuth = new Dropbox\WebAuth($this->appInfo, $this->clientId, $this->redirectUri, $csrfTokenStore);
   }
 
   public function authorizeStart() {
-    $webAuth = $this->getWebAuth();
-    $url = $webAuth->start();
+    $url = $this->webAuth->start();
     drupal_goto($url);
   }
 
   public function authorizeFinish() {
-    $webAuth = $this->getWebAuth();
     dpr($_GET);
     dpr($_SESSION);
     dpr(var_dump(drupal_session_started()));
     dpr('trying...');
     try {
-      list($accessToken, $userId, $urlState) = getWebAuth()->finish($_GET);
+      list($accessToken, $userId, $urlState) = $this->webAuth->finish($_GET);
     }
     catch (Dropbox\WebAuthException_BadRequest $ex) {
       dpr("/dropbox-auth-finish: bad request: " . $ex->getMessage());

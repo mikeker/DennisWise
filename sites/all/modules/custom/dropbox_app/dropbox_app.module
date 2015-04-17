@@ -70,6 +70,8 @@ function dropbox_app_menu() {
 }
 
 function dropbox_app_test() {
+  //$dbxapp = new DropboxApp('Drupal-Photo-Gallery/1.0', 'https://vagrant.denniswise.com/dropbox_api/authorize/finish');
+  //dpr($dbxapp);
   exit;
 }
 
@@ -77,7 +79,7 @@ function dropbox_app_test() {
  * Starts the Dropbox App authorization process.
  */
 function dropbox_app_authorize_start() {
-  $dbxapp = new DropboxApp('Drupal-Photo-Gallery/1.0', 'https://vagrant.denniswise.com/dropbox_api/authorize/finish');
+  $dbxapp = new DropboxApp('Drupal-Photo-Gallery/1.0', 'https://vagrant.denniswise.com/dropbox/authorize/finish');
   $dbxapp->authorizeStart();
 }
 
@@ -85,6 +87,6 @@ function dropbox_app_authorize_start() {
  * Finishes the Dropbox App authorization process.
  */
 function dropbox_app_authorize_finish() {
-  $dbxapp = new DropboxApp('Drupal-Photo-Gallery/1.0', 'https://vagrant.denniswise.com/dropbox_api/authorize/finish');
+  $dbxapp = new DropboxApp('Drupal-Photo-Gallery/1.0', 'https://vagrant.denniswise.com/dropbox/authorize/finish');
   $dbxapp->authorizeFinish();
 }
