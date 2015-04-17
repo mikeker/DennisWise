@@ -37,6 +37,18 @@ class DropboxApp {
   protected $redirectUri;
 
   /**
+   * @var integer
+   *
+   * The Drupal UID of the authorized user of the Dropbox account. For example,
+   * a user may setup a photo gallery based on a Dropbox folder but wants it to
+   * be viewable by anonymous users. When viewing the gallery, $drupalUser
+   * should equal the gallery owner's Drupal UID otherwise anonymous (or other
+   * Drupal users) will not be able access the files necessary to build the
+   * gallery.
+   */
+  protected $drupalUser;
+
+  /**
    * @var string
    *
    * The Dropbox access token returned from a successful \Dropbox\WebAuth.
@@ -53,6 +65,11 @@ class DropboxApp {
   public function __construct($clientId, $redirectUri) {
     $this->clientId = $clientId;
     $this->redirectUri = $redirectUri;
+
+    // Drupal user defaults to the currently logged in user. This can be over-
+    // ridden via setDrupalUser().
+    global $user;
+    $this->drupalUser = $user->uid;
 
     // Load the Dropbox SDK library.
     $library = libraries_load('dropbox_sdk');
@@ -95,6 +112,10 @@ class DropboxApp {
    */
   public function authorizeFinish() {
     try {
+      // Note:
+      //    $userId is the Dropbox user ID
+      //    $urlState is passed into webAuth->start()
+      // Both are unused at this time.
       list($accessToken, $userId, $urlState) = $this->webAuth->finish($_GET);
     }
     catch (Exception $ex) {
@@ -120,19 +141,19 @@ class DropboxApp {
 
     // Sanity check -- visitors should not have been able to get through
     // authorizeStart as anonymous.
-    global $user;
-    if (!$user->uid) {
+    if (!$this->drupalUser) {
       drupal_access_denied();
     }
 
+    // Otherwise, store the access token for this Drupal user.
     $this->accessToken = $accessToken;
 
     //  Save the access token for this user.
     db_delete('dropbox_app')
-      ->condition('uid', $user->uid)
+      ->condition('uid', $this->drupalUser)
       ->execute();
     $record = array(
-      'uid' => $user->uid,
+      'uid' => $this->drupalUser,
       'access_token' => $this->accessToken,
     );
     drupal_write_record('dropbox_app', $record);
@@ -142,11 +163,10 @@ class DropboxApp {
    * @return string
    */
   protected function getAccessToken() {
-    global $user;
     if (empty($this->accessToken)) {
       $token = db_query(
         'SELECT access_token FROM {dropbox_app} WHERE uid = :uid',
-        array(':uid' => $user->uid))
+        array(':uid' => $this->drupalUser))
         ->fetchField();
       if (empty($token)) {
         $this->authorizeStart();
@@ -157,4 +177,19 @@ class DropboxApp {
     }
     return $this->accessToken;
   }
+
+  /**
+   * Gets/sets the Drupal user whose authorization token should be used for
+   * Dropbox API calls.
+   *
+   * @param $uid
+   *   Drupal user's ID.
+   */
+  public function setDrupalUser($uid) {
+    $this->drupalUser = $uid;
+  }
+  public function getDrupalUser() {
+    return $this->drupalUser;
+  }
+
 }
