@@ -36,6 +36,19 @@ class DropboxApp {
    */
   protected $redirectUri;
 
+  /**
+   * @var string
+   *
+   * The Dropbox access token returned from a successful \Dropbox\WebAuth.
+   */
+  protected $accessToken;
+
+  /**
+   * @var \Dropbox\Client
+   *
+   * The class used to make most Dropbox API calls.
+   */
+  protected $client;
 
   public function __construct($clientId, $redirectUri) {
     $this->clientId = $clientId;
@@ -59,46 +72,51 @@ class DropboxApp {
     $this->webAuth = new Dropbox\WebAuth($this->appInfo, $this->clientId, $this->redirectUri, $csrfTokenStore);
   }
 
+  /**
+   * Starts an authorization request with Dropbox. Forward the visitor to
+   * Dropbox to (potentially authenticate) and authorize use of this app.
+   */
   public function authorizeStart() {
+    if (user_is_anonymous()) {
+      // It is not recommended that anonymous visitors authorize apps with
+      // Dropbox. This would lead to any anonymous user having access to the
+      // Dropbox account of the first visitor via the app in question. If this
+      // is, in fact, the intention of your Dropbox app, then you should
+      // subclass DropboxApp and override this functionality.
+      drupal_access_denied();
+    }
     $url = $this->webAuth->start();
     drupal_goto($url);
   }
 
+  /**
+   * Finishes an authorization request with Dropbox. On success, an access token
+   * for this Drupal user will be saved in the database.
+   */
   public function authorizeFinish() {
-    dpr($_GET);
-    dpr($_SESSION);
-    dpr(var_dump(drupal_session_started()));
-    dpr('trying...');
     try {
       list($accessToken, $userId, $urlState) = $this->webAuth->finish($_GET);
     }
-    catch (Dropbox\WebAuthException_BadRequest $ex) {
-      dpr("/dropbox-auth-finish: bad request: " . $ex->getMessage());
-      // Respond with an HTTP 400 and display error page...
-    }
-    catch (Dropbox\WebAuthException_BadState $ex) {
-      // Auth session expired.  Restart the auth process.
-      //drupal_goto('/dropbox_api/authorize/start');
-      dpr('Session expired, Going to /dropbox_api/authorize/start');
-    }
-    catch (Dropbox\WebAuthException_Csrf $ex) {
-      dpr("/dropbox-auth-finish: CSRF mismatch: " . $ex->getMessage());
-      // Respond with HTTP 403 and display error page...
-    }
-    catch (Dropbox\WebAuthException_NotApproved $ex) {
-      dpr("/dropbox-auth-finish: not approved: " . $ex->getMessage());
-    }
-    catch (Dropbox\WebAuthException_Provider $ex) {
-      dpr("/dropbox-auth-finish: error redirect from Dropbox: " . $ex->getMessage());
-    }
-    catch (Dropbox\Exception $ex) {
-      dpr("/dropbox-auth-finish: error communicating with Dropbox API: " . $ex->getMessage());
+    catch (Exception $ex) {
+      drupal_set_message(t(
+        'There was an error authorizing use of your Dropbox account: %err',
+        array('%err' => $ex->getMessage())
+      ));
+
+      if ($ex instanceof Dropbox\WebAuthException_BadRequest) {
+        // Technically, should be a 400, but there's no easy way to return a 400
+        // without messing around with headers.
+        drupal_not_found();
+      }
+
+      if ($ex instanceof Dropbox\WebAuthException_Csrf) {
+        drupal_access_denied();
+      }
+
+      // Needed to ensure page rendering continues.
+      return '';
     }
 
-    dpr('success!');
-    dpr($accessToken);
-    dpr($userId);
-    dpr($urlState);
-    exit;
+    // Do something
   }
 }
