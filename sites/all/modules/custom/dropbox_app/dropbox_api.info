@@ -1,4 +1,5 @@
-name = Dropbox API
-description = A thin wrapper around the Dropbox API
+name = Dropbox App
+description = A thin wrapper around the Dropbox App SDK
 core = 7.x
 dependencies[] = libraries
+files[] = DropboxApp.php

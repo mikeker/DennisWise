@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * @file
+ * Provides a thin wrapper for the Dropbox API.
+ */
+
+use \DropboxApp;
+/**
+ * Implements hook_permission.
+ */
+function dropbox_app_permission() {
+  return array(
+    'access dropbox app' => array(
+      'title' => t('Access Dropbox App'),
+      'description' => t('Allows some users to access the Dropbox App.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function dropbox_app_libraries_info() {
+  $libraries['dropbox_sdk'] = array(
+    'name' => 'Dropbox API SDK',
+    'vendor url' => 'https://www.dropbox.com/developers/core/sdks/php',
+    'version arguments' => array(
+      'file' => 'ChangeLog.txt',
+      'pattern' => '/^(\d+)/',
+      'lines' => 2,
+    ),
+    'files' => array(
+      'php' => array('lib/Dropbox/autoload.php'),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function dropbox_app_menu() {
+  $items = array();
+
+  // Endpoints for Dropbox authorization.
+  $items['dropbox/authorize/start'] = array(
+    'title' => 'Allow access to your Dropbox account',
+    'page callback' => 'dropbox_app_authorize_start',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  $items['dropbox/authorize/finish'] = array(
+    'title' => 'All done!',
+    'page callback' => 'dropbox_app_authorize_finish',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+
+  // Debugging:
+  $items['test'] = array(
+    'title' => 'test',
+    'page callback' => 'dropbox_app_test',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+function dropbox_app_test() {
+  exit;
+}
+
+/**
+ * Starts the Dropbox App authorization process.
+ */
+function dropbox_app_authorize_start() {
+  $dbxapp = new DropboxApp();
+  $dbxapp->authorizeStart();
+}
+
+/**
+ * Finishes the Dropbox App authorization process.
+ */
+function dropbox_app_authorize_finish() {
+  $dbxapp = new DropboxApp();
+  $dbxapp->authorizeFinish();
+}
