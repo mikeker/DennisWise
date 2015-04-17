@@ -113,10 +113,48 @@ class DropboxApp {
         drupal_access_denied();
       }
 
-      // Needed to ensure page rendering continues.
+      // Needed to ensure page rendering continues if this is called from a menu
+      // callback function. Otherwise the visitor won't see the above message.
       return '';
     }
 
-    // Do something
+    // Sanity check -- visitors should not have been able to get through
+    // authorizeStart as anonymous.
+    global $user;
+    if (!$user->uid) {
+      drupal_access_denied();
+    }
+
+    $this->accessToken = $accessToken;
+
+    //  Save the access token for this user.
+    db_delete('dropbox_app')
+      ->condition('uid', $user->uid)
+      ->execute();
+    $record = array(
+      'uid' => $user->uid,
+      'access_token' => $this->accessToken,
+    );
+    drupal_write_record('dropbox_app', $record);
+  }
+
+  /**
+   * @return string
+   */
+  protected function getAccessToken() {
+    global $user;
+    if (empty($this->accessToken)) {
+      $token = db_query(
+        'SELECT access_token FROM {dropbox_app} WHERE uid = :uid',
+        array(':uid' => $user->uid))
+        ->fetchField();
+      if (empty($token)) {
+        $this->authorizeStart();
+      }
+      else {
+        $this->accessToken = $token;
+      }
+    }
+    return $this->accessToken;
   }
 }
