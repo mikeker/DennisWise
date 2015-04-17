@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Implements hook_requirements.
+ */
+function dropbox_app_requirements($phase) {
+  $requirements = array();
+
+  // Ensure translations don't break during installation.
+  $t = get_t();
+
+  if ('runtime' == $phase) {
+    // Check that we have a APP key and secret, otherwise we can't communicate
+    // with Dropbox.
+    $key = variable_get('dropbox_app_app_key', '');
+    $secret = variable_get('dropbox_app_app_secret', '');
+    if (empty($key) || empty($secret)) {
+      $requirements['dropbox_api'] = array(
+        'title' => $t('Dropbox App'),
+        'value' => $t('The Dropbox App key and secret have not be entered. It is recommended that these settings be placed in your settings.php (or a similar file) that is not part of any public repositories.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+
+  return $requirements;
+}
