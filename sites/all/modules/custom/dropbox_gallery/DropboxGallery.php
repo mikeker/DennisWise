@@ -41,7 +41,7 @@ class DropboxGallery extends DropboxApp {
   /**
    * Returns a Dropbox folder's metadata for a given gallery name.
    *
-   * @param $gallery
+   * @param $gallery_name
    *   String with the gallery name, which matches a subfolder in Dropbox
    *   containing the images in this gallery.
    *
@@ -49,10 +49,9 @@ class DropboxGallery extends DropboxApp {
    *
    * @see https://www.dropbox.com/developers/core/docs#metadata-details
    */
-  public function getFolderMeta($gallery) {
+  public function getFolderMeta($gallery_name) {
     // Collect all the folders under the App folder and check if a gallery is
     // named the same. Allow some mismatching for misc characters in folder names.
-    dpr($this);
     $rootFolder = $this->getClient()->getMetadataWithChildren('/');
     $folder = NULL;
 
@@ -62,7 +61,7 @@ class DropboxGallery extends DropboxApp {
       }
 
       $path = ltrim($item['path'], '/');
-      if ($gallery == $path || str_replace(array('-', '_', '+'), array(' ', ' ', ' '), $gallery) == $path) {
+      if ($gallery_name == $path || str_replace(array('-', '_', '+'), array(' ', ' ', ' '), $gallery_name) == $path) {
         $folder = $item;
         break;
       }
@@ -82,8 +81,8 @@ class DropboxGallery extends DropboxApp {
    *   TRUE on success, FALSE otherwise.
    */
   public function refresh($gallery, &$error = '') {
-    $meta = $this->getFolderMeta($gallery);
-    if (empty($meta)) {
+    $folder = $this->getFolderMeta($gallery);
+    if (empty($folder)) {
       return FALSE;
     }
 
@@ -102,13 +101,14 @@ class DropboxGallery extends DropboxApp {
       }
     }
 
-    // Build a drupal-image-gallery directory if it doesn't exist.
-    $filesDir = drupal_realpath('public://') . '/drupal-image-gallery';
+    // Build a drupal-image-gallery directories if they doesn't exist.
+    $filesDir = drupal_realpath('public://') . '/drupal-image-gallery/' . $folder['path'];
     if (!is_dir($filesDir)) {
       file_prepare_directory($filesDir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+      file_prepare_directory($filesDir . '/thumbnails', FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+      file_prepare_directory($filesDir . '/full', FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     }
 
-    dpr($photos); exit;
     // Download each original, resize for "full" and "thumbnail" via Image
     // Styles, then delete the originals from our server.
     // @TODO: need to deal with changes to originals on Dropbox.
@@ -116,15 +116,39 @@ class DropboxGallery extends DropboxApp {
     foreach ($photos as $photo) {
       // @TODO: handle difference between Windows and Linux filenames.
       $baseFilename = Dropbox\Path::getName($photo['path']);
-      $f = fopen("$filesDir/$baseFilename", 'w');
-      $meta = $this->getClient()->getFile($photo['path'], $f);
+      $originalPath = "$filesDir/$baseFilename";
+      $f = fopen($originalPath, 'w');
+      $folder = $this->getClient()->getFile($photo['path'], $f);
       fclose($f);
-      $imagesMeta[$baseFilename] = $meta;
-    }
-    dpr($imagesMeta);
-    exit;
+      $imagesMeta[$baseFilename] = $folder;
 
-    return TRUE;
+      // Generate thumbnail and "full"-sized derivatives. (The full-sized image
+      // saved here is not the full-sized image from Dropbox, but rather a down-
+      // rez'ed image that is shown when the visitor clicks on a thumbnail.
+      // Unfortunate terminology...
+      // NOTE: Generate the large image first, if there is an error then the
+      // thumbnail will not be generated, reducing our chances of 404's when
+      // clicking through to the larger version.
+      // @TODO: configurable sizing options and folder names.
+      if (!image_style_create_derivative('photo_large', $originalPath, $filesDir . '/full/' . $baseFilename) ||
+        !image_style_create_derivative('photo_small', $originalPath, $filesDir . '/thumbnails/' . $baseFilename)) {
+        $error .= 'There was an error generating derivatives for ' . $baseFilename . '.<br />';
+      }
+
+      // Delete the original downloaded from Dropbox -- we only care about the
+      // deriviatives for setting up the gallery.
+      unlink($originalPath);
+    }
+
+    dpr($imagesMeta);
+    dpr('errors are: ' . $error);
+
+    if (!empty($error)) {
+      return FALSE;
+    }
+    else {
+      return TRUE;
+    }
   }
 
   /**
