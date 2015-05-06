@@ -134,9 +134,10 @@ class DropboxApp {
         drupal_access_denied();
       }
 
-      // Needed to ensure page rendering continues if this is called from a menu
-      // callback function. Otherwise the visitor won't see the above message.
-      return '';
+      // drupal_not_found and drupal_access_denied will short-circuit the page
+      // rendering pipeline. But if this is not one of those errors, return
+      // FALSE and let the calling function handle it.
+      return FALSE;
     }
 
     // Sanity check -- visitors should not have been able to get through
@@ -157,6 +158,7 @@ class DropboxApp {
       'access_token' => $this->accessToken,
     );
     drupal_write_record('dropbox_app', $record);
+    return TRUE;
   }
 
   /**
@@ -184,12 +186,35 @@ class DropboxApp {
    *
    * @param $uid
    *   Drupal user's ID.
+   *
+   * @return bool
+   *   FALSE if there is no authorization token for this user. TRUE otherwise.
    */
   public function setDrupalUser($uid) {
-    $this->drupalUser = $uid;
+    $token = db_query(
+      'SELECT access_token FROM {dropbox_app} WHERE uid = :uid',
+      array(':uid' => $this->drupalUser))
+      ->fetchField();
+    if (empty($token)) {
+      return FALSE;
+    }
+    else {
+      $this->drupalUser = $uid;
+      $this->accessToken = $token;
+      return TRUE;
+    }
   }
   public function getDrupalUser() {
     return $this->drupalUser;
   }
 
+  /**
+   * Returns a \Dropbox\Client object that can be used to call the Dropbox API.
+   */
+  public function getClient() {
+    if (empty($this->client)) {
+      $this->client = new Dropbox\Client($this->getAccessToken(), $this->clientId);
+    }
+    return $this->client;
+  }
 }

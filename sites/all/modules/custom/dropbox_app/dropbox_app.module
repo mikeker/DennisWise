@@ -6,17 +6,6 @@
  */
 
 use \DropboxApp;
-/**
- * Implements hook_permission.
- */
-function dropbox_app_permission() {
-  return array(
-    'access dropbox app' => array(
-      'title' => t('Access Dropbox App'),
-      'description' => t('Allows some users to access the Dropbox App.'),
-    ),
-  );
-}
 
 /**
  * Implements hook_libraries_info().
