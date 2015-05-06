@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * Implements hook_schema.
+ */
+function dropbox_gallery_schema() {
+  $schema['dropbox_gallery'] = array(
+    'description' => 'Stores metadata about Dropbox Gallery image files.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier of a metadata entry.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'folder_rev' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The Dropbox revision number of the folder this file resides in.',
+      ),
+      'file_rev' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The Dropbox revision number of the file.',
+      ),
+      'metadata' => array(
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+        'description' => 'Serialized data containing the file metadata provided by Dropbox.',
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'access_token' => array('folder_rev', 'file_rev'),
+    ),
+  );
+
+  return $schema;
+}

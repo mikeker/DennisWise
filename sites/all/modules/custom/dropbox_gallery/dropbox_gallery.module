@@ -1,0 +1,149 @@
+<?php
+
+/**
+ * @file
+ * Builds a photo gallery from a Dropbox folder.
+ */
+
+use \DropboxGallery;
+
+/**
+ * Implements hook_permission.
+ * @TODO:
+function dropbox_gallery_permission() {
+  return array(
+    'access dropbox app' => array(
+      'title' => t('Access Dropbox App'),
+      'description' => t('Allows some users to access the Dropbox App.'),
+    ),
+  );
+}
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function dropbox_gallery_menu() {
+  $items = array();
+
+  // Endpoints for Dropbox authorization.
+  $items['dropbox_gallery/authorize/start'] = array(
+    'title' => 'Allow access to your Dropbox account',
+    'page callback' => 'dropbox_gallery_authorize_start',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  $items['dropbox_gallery/authorize/finish'] = array(
+    'title' => 'All done!',
+    'page callback' => 'dropbox_gallery_authorize_finish',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  $items['gallery/%user/%'] = array(
+    // @TODO: get the gallery title in there...
+    'title' => 'A Gallery!',
+    'page callback' => 'dropbox_gallery_view',
+    'page arguments' => array(1, 2),
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  $items['admin/dropbox_gallery/%'] = array(
+    // @TODO: get the gallery title in there...
+    'title' => 'Refresh Gallery',
+    'page callback' => 'dropbox_gallery_refresh',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+
+  // Debugging:
+  //$items['test'] = array(
+  //  'title' => 'test',
+  //  'page callback' => 'dropbox_gallery_test',
+  //  'type' => MENU_CALLBACK,
+  //  'access callback' => TRUE,
+  //);
+
+  return $items;
+}
+
+/**
+ * Internal function to bridge the gap between classes and Drupal 7's callback-
+ * based API. Stores an instantiated DrupalGallery object for the lifetime of
+ * this page request.
+ */
+function _dropbox_gallery_get_gallery_object($uid) {
+  static $gallery[$uid] = array();
+
+  if (empty($gallery[$uid])) {
+    $gallery[$uid] = new DropboxGallery($uid);
+  }
+
+  return $gallery[$uid];
+}
+
+/**
+ * Callback to start the Dropbox Authorization process.
+ */
+function dropbox_gallery_authorize_start() {
+  global $user;
+  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+  $gallery->authorizeStart();
+}
+
+/**
+ * Callback to finish the Dropbox Authorization process.
+ */
+function dropbox_gallery_authorize_finish() {
+  global $user;
+  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+  if ($gallery->authorizeFinish()) {
+    return t('Woot! You have authorized this site to use the files in your Dropbox image gallery folder. Go to your Dropbox account and add a folder to the Dropbox -> Apps -> Image Gallery folder to get started.');
+  }
+}
+
+/**
+ * Callback to view a Dropbox Gallery.
+ */
+function dropbox_gallery_view($user, $gallery_name) {
+  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+  return $gallery->display($gallery_name);
+}
+
+/**
+ * Callback to refresh a Dropbox Gallery.
+ */
+function dropbox_gallery_refresh($gallery_name) {
+  if (empty($gallery)) {
+    return t('No gallery specified');
+  }
+
+  // Drupal users can only refresh their own galleries.
+  global $user;
+  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+
+  if (!$gallery->refresh($gallery_name, $error)) {
+    return t('An error occured: %err', array('%err' => $error));
+  }
+  else {
+    return t('The %gallery gallery has been refreshed.', array('%gallery' => $gallery_name));
+  }
+}
+
+/**
+ * Callback to view a gallery of a give Drupal user
+ *
+ * @param $uid
+ * @param $gallery_name
+ *
+ * @return HTML
+ */
+function dropbox_gallery_view($uid, $gallery_name) {
+  $gallery = _dropbox_gallery_get_gallery_object($uid);
+  return $gallery->view($gallery_name);
+}
+
+function dropbox_gallery_test() {
+  dropbox_gallery_refresh('Desktop images');
+  dpr('in test'); exit;
+}
