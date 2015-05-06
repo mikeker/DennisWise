@@ -16,11 +16,6 @@ class DropboxGallery extends DropboxApp {
   protected $app;
 
   /**
-   * @var \Dropbox\Client
-   */
-  protected $client;
-
-  /**
    * Instatiates a Dropbox Gallery owned by a given Drupal user.
    *
    * @param $uid
@@ -57,7 +52,8 @@ class DropboxGallery extends DropboxApp {
   public function getFolderMeta($gallery) {
     // Collect all the folders under the App folder and check if a gallery is
     // named the same. Allow some mismatching for misc characters in folder names.
-    $rootFolder = $this->client->getMetadataWithChildren('/');
+    dpr($this);
+    $rootFolder = $this->getClient()->getMetadataWithChildren('/');
     $folder = NULL;
 
     foreach ($rootFolder['contents'] as $item) {
@@ -92,7 +88,7 @@ class DropboxGallery extends DropboxApp {
     }
 
     // List all the files in this folder.
-    $files = $this->client->getMetadataWithChildren($folder['path']);
+    $files = $this->getClient()->getMetadataWithChildren($folder['path']);
     if (empty($files['contents'])) {
       $error = t('There are no photos in this image gallery.');
       return FALSE;
@@ -112,6 +108,7 @@ class DropboxGallery extends DropboxApp {
       file_prepare_directory($filesDir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     }
 
+    dpr($photos); exit;
     // Download each original, resize for "full" and "thumbnail" via Image
     // Styles, then delete the originals from our server.
     // @TODO: need to deal with changes to originals on Dropbox.
@@ -120,7 +117,7 @@ class DropboxGallery extends DropboxApp {
       // @TODO: handle difference between Windows and Linux filenames.
       $baseFilename = Dropbox\Path::getName($photo['path']);
       $f = fopen("$filesDir/$baseFilename", 'w');
-      $meta = $this->client->getFile($photo['path'], $f);
+      $meta = $this->getClient()->getFile($photo['path'], $f);
       fclose($f);
       $imagesMeta[$baseFilename] = $meta;
     }
@@ -150,7 +147,6 @@ class DropboxGallery extends DropboxApp {
       drupal_not_found();
     }
 
-    $client = _dropbox_gallery_get_client($uid);
     $folder = dropbox_gallery_get_folder($gallery);
     if (empty($folder)) {
       drupal_set_message(t('The specified gallery %gallery cannot be found', array('%gallery' => $gallery)));

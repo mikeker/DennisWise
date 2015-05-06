@@ -5,8 +5,6 @@
  * Builds a photo gallery from a Dropbox folder.
  */
 
-use \DropboxGallery;
-
 /**
  * Implements hook_permission.
  * @TODO:
@@ -57,26 +55,37 @@ function dropbox_gallery_menu() {
   );
 
   // Debugging:
-  //$items['test'] = array(
-  //  'title' => 'test',
-  //  'page callback' => 'dropbox_gallery_test',
-  //  'type' => MENU_CALLBACK,
-  //  'access callback' => TRUE,
-  //);
+  $items['test'] = array(
+    'title' => 'test',
+    'page callback' => 'dropbox_gallery_test',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
 
   return $items;
 }
 
 /**
  * Internal function to bridge the gap between classes and Drupal 7's callback-
- * based API. Stores an instantiated DrupalGallery object for the lifetime of
+ * based API. Stores an instantiated DropboxGallery object for the lifetime of
  * this page request.
  */
 function _dropbox_gallery_get_gallery_object($uid) {
-  static $gallery[$uid] = array();
+  static $gallery = array();
+
+  // Ensure $uid is a UID, not a user object. Defaults to the current user if
+  // not specified.
+  if (empty($uid)) {
+    global $user;
+    $uid = $user->uid;
+  }
+  elseif (is_object($uid)) {
+    $uid = $uid->uid;
+  }
 
   if (empty($gallery[$uid])) {
-    $gallery[$uid] = new DropboxGallery($uid);
+    include_once drupal_get_path('module', 'dropbox_gallery') . '/DropboxGallery.php';
+    $gallery[$uid] = new DropboxGallery\DropboxGallery($uid);
   }
 
   return $gallery[$uid];
@@ -103,18 +112,10 @@ function dropbox_gallery_authorize_finish() {
 }
 
 /**
- * Callback to view a Dropbox Gallery.
- */
-function dropbox_gallery_view($user, $gallery_name) {
-  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
-  return $gallery->display($gallery_name);
-}
-
-/**
  * Callback to refresh a Dropbox Gallery.
  */
 function dropbox_gallery_refresh($gallery_name) {
-  if (empty($gallery)) {
+  if (empty($gallery_name)) {
     return t('No gallery specified');
   }
 

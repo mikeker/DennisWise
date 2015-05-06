@@ -2,3 +2,4 @@ name = Dropbox Gallery
 description = Builds a photo gallery out of a Dropbox folder.
 core = 7.x
 dependencies[] = dropbox_app
+files[] = DropboxGallery.php
