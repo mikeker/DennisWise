@@ -105,21 +105,24 @@ class DropboxGallery extends DropboxApp {
    * @param $gallery_name
    *   Gallery name (folder name) from Dropbox.
    *
+   * @return string
+   *   Path on the local server to the gallery root directory.
+   *
    * @TODO: Deal with out-of-bounds characters and Win/Linux/Mac naming issues.
    */
   public function prepareDirectories($gallery_name) {
     $filesDir = drupal_realpath('public://') . '/drupal-image-gallery' . $gallery_name;
-    if (!is_dir($filesDir)) {
-      file_prepare_directory($filesDir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+    foreach (array('', 'thumbnails', 'full') as $subDir) {
+      $dir = $filesDir;
+      if (!empty($subDir)) {
+        $dir = "$filesDir/$subDir";
+      }
+      if (!file_prepare_directory($dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
+        $this->error = t('Unable to create %dir', array('%dir' => $filesDir));
+        return FALSE;
+      }
     }
-    $thumbsDir = $filesDir . '/thumbnails';
-    if (!is_dir($thumbsDir)) {
-      file_prepare_directory($thumbsDir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
-    }
-    $fullDir = $filesDir . '/full';
-    if (!is_dir($fullDir)) {
-      file_prepare_directory($fullDir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
-    }
+    return $filesDir;
   }
 
   /**
@@ -166,7 +169,10 @@ class DropboxGallery extends DropboxApp {
     }
 
     $this->deleteGalleryDirectories($folder['path']);
-    $this->prepareDirectories($folder['path']);
+    if (!$filesDir = $this->prepareDirectories($folder['path'])) {
+      // $this->error is set by prepareDirectory.
+      return FALSE;
+    }
 
     // Download each original, resize for "full" and "thumbnail" via Image
     // Styles, then delete the originals from our server.
