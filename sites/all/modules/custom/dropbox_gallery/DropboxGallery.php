@@ -214,9 +214,14 @@ class DropboxGallery extends DropboxApp {
   public function refreshSingle($filesDir, $photo) {
     $baseFilename = Dropbox\Path::getName($photo['path']);
     $originalPath = "$filesDir/$baseFilename";
-    $f = fopen($originalPath, 'w');
-    $folder = $this->getClient()->getFile($photo['path'], $f);
-    fclose($f);
+    if ($f = fopen($originalPath, 'w')) {
+      $folder = $this->getClient()->getFile($photo['path'], $f);
+      fclose($f);
+    }
+    else {
+      $this->error = t('Unable to open %file', array('%file' => $originalPath));
+      return FALSE;
+    }
     $imagesMeta[$baseFilename] = $folder;
 
     // Generate thumbnail and "full"-sized derivatives. (The full-sized image
@@ -234,7 +239,12 @@ class DropboxGallery extends DropboxApp {
 
     // Delete the original downloaded from Dropbox -- we only care about the
     // derivatives for setting up the gallery.
-    unlink($originalPath);
+    if (!file_unmanaged_delete($originalPath)) {
+      // Non-fatal error so continue but not in the log that the original was
+      // unable to be deleted.
+      watchdog('Dropbox Gallery', 'Unable to delete the downloaded file: %file', array('%file' => $originalPath));
+    }
+    return TRUE;
   }
 
   /**

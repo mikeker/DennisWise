@@ -4,19 +4,24 @@
  * @file
  * Builds a photo gallery from a Dropbox folder.
  */
+use DropboxGallery\DropboxGallery;
 
 /**
  * Implements hook_permission.
  * @TODO:
+ */
 function dropbox_gallery_permission() {
   return array(
-    'access dropbox app' => array(
-      'title' => t('Access Dropbox App'),
-      'description' => t('Allows some users to access the Dropbox App.'),
+    'access dropbox gallery' => array(
+      'title' => t('Access Dropbox Galleries'),
+      'description' => t('Limits access to Dropbox Galleries.'),
+    ),
+    'administer dropbox gallery' => array(
+      'title' => t('Administer Dropbox Gallery'),
+      'description' => t('Allows users with this permission to edit and refresh gallery images on this server. <strong>No access is granted to the user\'s Dropbox account</strong> with this permission.'),
     ),
   );
 }
- */
 
 /**
  * Implements hook_menu().
@@ -29,38 +34,52 @@ function dropbox_gallery_menu() {
     'title' => 'Allow access to your Dropbox account',
     'page callback' => 'dropbox_gallery_authorize_start',
     'type' => MENU_CALLBACK,
-    'access callback' => TRUE,
+    'access arguments' => array('administer dropbox gallery'),
   );
+
   $items['dropbox_gallery/authorize/finish'] = array(
     'title' => 'All done!',
     'page callback' => 'dropbox_gallery_authorize_finish',
     'type' => MENU_CALLBACK,
-    'access callback' => TRUE,
+    'access arguments' => array('administer dropbox gallery'),
   );
+
+  // View a gallery by user and gallery name.
   $items['gallery/%user/%'] = array(
     // @TODO: get the gallery title in there...
     'title' => 'A Gallery!',
     'page callback' => 'dropbox_gallery_view',
     'page arguments' => array(1, 2),
     'type' => MENU_CALLBACK,
-    'access callback' => TRUE,
+    'access arguments' => array('access dropbox gallery'),
   );
-  $items['admin/dropbox_gallery/%'] = array(
+
+  // Main admin page for galleries for the current user.
+  $items['admin/config/media/dropbox_gallery'] = array(
+    'title' => 'Dropbox Galleries',
+    'page callback' => 'dropbox_gallery_admin',
+    'page arguments' => array(3),
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer dropbox gallery'),
+  );
+
+  // Callback to refresh a a gallery from the Dropbox server.
+  $items['admin/config/media/dropbox_gallery/refresh/%'] = array(
     // @TODO: get the gallery title in there...
     'title' => 'Refresh Gallery',
-    'page callback' => 'dropbox_gallery_refresh',
-    'page arguments' => array(2),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('dropbox_gallery_refresh_confirm', 5),
     'type' => MENU_CALLBACK,
-    'access callback' => TRUE,
+    'access arguments' => array('administer dropbox gallery'),
   );
 
   // Debugging:
-  $items['test'] = array(
-    'title' => 'test',
-    'page callback' => 'dropbox_gallery_test',
-    'type' => MENU_CALLBACK,
-    'access callback' => TRUE,
-  );
+  //$items['test'] = array(
+  //  'title' => 'test',
+  //  'page callback' => 'dropbox_gallery_test',
+  //  'type' => MENU_CALLBACK,
+  //  'access callback' => TRUE,
+  //);
 
   return $items;
 }
@@ -69,6 +88,13 @@ function dropbox_gallery_menu() {
  * Internal function to bridge the gap between classes and Drupal 7's callback-
  * based API. Stores an instantiated DropboxGallery object for the lifetime of
  * this page request.
+ *
+ * @param $uid
+ *   ID of the Drupal user that has authorized use of their Dropbox account.
+ *   Results in a 404 error if the user has not authorized this Dropbox App or
+ *   the authorization has expired or been revoked.
+ *
+ * @return DropboxGallery
  */
 function _dropbox_gallery_get_gallery_object($uid) {
   static $gallery = array();
@@ -85,7 +111,7 @@ function _dropbox_gallery_get_gallery_object($uid) {
 
   if (empty($gallery[$uid])) {
     include_once drupal_get_path('module', 'dropbox_gallery') . '/DropboxGallery.php';
-    $gallery[$uid] = new DropboxGallery\DropboxGallery($uid);
+    $gallery[$uid] = new DropboxGallery($uid);
   }
 
   return $gallery[$uid];
@@ -107,28 +133,118 @@ function dropbox_gallery_authorize_finish() {
   global $user;
   $gallery = _dropbox_gallery_get_gallery_object($user->uid);
   if ($gallery->authorizeFinish()) {
-    return t('Woot! You have authorized this site to use the files in your Dropbox image gallery folder. Go to your Dropbox account and add a folder to the Dropbox -> Apps -> Image Gallery folder to get started.');
+    return t('Woot! You have authorized this site to use the files in your Dropbox image gallery folder. Go to your Dropbox account and add a folder with some images to the Dropbox -> Apps -> Image Gallery folder to get started.');
   }
 }
 
 /**
- * Callback to refresh a Dropbox Gallery.
+ * Since refreshing a gallery is (potentially) destructive, confirm the action.
  */
-function dropbox_gallery_refresh($gallery_name) {
-  if (empty($gallery_name)) {
-    return t('No gallery specified');
+function dropbox_gallery_refresh_confirm($form, &$form_state, $gallery_name) {
+  $gallery_name = check_plain($gallery_name);
+  $form['dropbox_gallery_name'] = array(
+    '#type' => 'value',
+    '#value' => $gallery_name
+  );
+  return confirm_form(
+    $form,
+    t('Refresh %gallery?', array('%gallery' => $gallery_name)),
+    'admin/config/media/dropbox_gallery',
+    t('This will remove all %gallery images from this server and replace them with those from your Dropbox account.', array('%gallery' => $gallery_name)),
+    t('Refresh gallery')
+  );
+}
+
+/**
+ * Submit callback for the refresh confirmation form.
+ */
+function dropbox_gallery_refresh_confirm_submit($form, &$form_state) {
+  $gallery_name = check_plain($form_state['values']['dropbox_gallery_name']);
+  if ($form_state ['values']['confirm'] && !empty($gallery_name)) {
+    // Drupal users can only refresh their own galleries.
+    global $user;
+    $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+
+    if (!$gallery->refresh($gallery_name)) {
+      $message = t('There was an error refreshing %gallery from your Dropbox account: @err.', array(
+        '%gallery' => $gallery_name,
+        '@err' => $gallery->getError(),
+      ));
+      drupal_set_message($message, 'error');
+    }
+    else {
+      drupal_set_message(t('The %gallery as been updated with the files from your Dropbox account.', array('%gallery' => $gallery_name)));
+    }
   }
 
-  // Drupal users can only refresh their own galleries.
-  global $user;
-  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+  // Return to the admin page.
+  $form_state ['redirect'] = 'admin/config/media/dropbox_gallery';
+}
 
-  if (!$gallery->refresh($gallery_name, $error)) {
-    return t('An error occured: %err', array('%err' => $error));
+/**
+ * Creates derivative images for a single Dropbox file. Used with the Batch API.
+ */
+function dropbox_gallery_batch_refresh_file($filesDir, $photo, $status, &$context) {
+  if (empty($context['sandbox']['gallery'])) {
+    $context['sandbox']['gallery'] = serialize(_dropbox_gallery_get_gallery_object());
+  }
+  if (!isset($context['results'])) {
+    $context['results']['errors'] = array();
+    $context['results']['successes'] = array();
+  }
+
+  // Update text under the progress bar.
+  $context['message'] = $status;
+
+  // Get gallery object from the previous batch execution.
+  $gallery = unserialize($context['sandbox']['gallery']);
+  dd($gallery, 'gallery');
+
+  if (!$gallery->refreshSingle($filesDir, $photo)) {
+    $context['results']['errors'][] = $gallery->getError();
   }
   else {
-    return t('The %gallery gallery has been refreshed.', array('%gallery' => $gallery_name));
+    $context['results']['successes'] = t('Successfully created derivative images for @photo', array('@photo' => $photo['path']));
   }
+
+  // Save gallery object for the next go-round.
+  $context['sandbox']['gallery'] = serialize($gallery);
+}
+
+/**
+ * Implements callback_batch_finished.
+ */
+function dropbox_gallery_batch_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('Successfully processed @count images. Your gallery is ready for viewing!', array(
+      '@count' => count($results['successes']),
+    )));
+  }
+  else {
+    $message = t('There was one or more errors processing the images for this gallery.');
+    $message .= theme('item_list', array('items' => $results['errors']));
+    drupal_set_message($message, 'error');
+  }
+}
+
+/**
+ * Provides an admin form for Dropbox Galleries.
+ */
+function dropbox_gallery_admin() {
+  // Users can only admin their own galleries.
+  global $user;
+  $gallery = _dropbox_gallery_get_gallery_object($user->uid);
+  $items = array();
+  foreach ($gallery->getAllFolders() as $folder => $folder_metadata) {
+    // @TODO: should we mess with the URL?
+    $path = str_replace(' ', '-', $folder);
+    $items[] = t('@gallery_folder -- Operations: <a href="!view_url">View</a>, <a href="!refresh_url">Refresh from Dropbox</a>.', array(
+      '@gallery_folder' => $folder,
+      '!view_url' => url('gallery/' . $user->uid . '/' . $path),
+      '!refresh_url' => url('admin/config/media/dropbox_gallery/refresh/' . $path),
+    ));
+  }
+  return theme('item_list', array('items' => $items));
 }
 
 /**
@@ -145,6 +261,5 @@ function dropbox_gallery_view($uid, $gallery_name) {
 }
 
 function dropbox_gallery_test() {
-  dropbox_gallery_refresh('Desktop images');
   dpr('in test'); exit;
 }
