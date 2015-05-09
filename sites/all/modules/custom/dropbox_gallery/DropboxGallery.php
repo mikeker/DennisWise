@@ -28,6 +28,7 @@ class DropboxGallery extends DropboxApp {
    *   Dropbox app with their Dropbox account.
    */
   public function __construct($uid = '') {
+    dd('creating DropboxGallery');
     if (is_object($uid)) {
       $uid = $uid->uid;
     }
@@ -44,6 +45,15 @@ class DropboxGallery extends DropboxApp {
 
     $this->error = '';
   }
+
+  /**
+   * Ensures this file has been included when unserializing this object.
+   * Prevents __PHP_Incomplete_Class Object errors.
+   */
+  //public function __wakeup() {
+  //  dd('in __wakeup for DropboxGallery');
+  //  parent::__wakeup();
+  //}
 
   /**
    * Returns the most recent error.
@@ -178,30 +188,35 @@ class DropboxGallery extends DropboxApp {
     // Styles, then delete the originals from our server.
     // @TODO: need to deal with changes to originals on Dropbox.
     // @TODO: handle difference between Windows and Linux filenames.
-    $operations = array();
-    $total = count($photos);
-    foreach ($photos as $index => $photo) {
-      $operations[] = array(
-        'dropbox_gallery_batch_refresh_file',
-        array(
-          $filesDir,
-          $photo,
-          t('Processing image @name: @curr out of @total', array(
-            '@name' => Dropbox\Path::getName($photo['path']),
-            '@curr' => $index + 1,    // Arrays are zero-indexed.
-            '@total' => $total,
-          )),
-        ),
-      );
-    }
-
-    // DEBUG:
-    //$operations = array($operations[0]);
+    //$operations = array();
+    //$total = count($photos);
+    //foreach ($photos as $index => $photo) {
+    //  $index++;   // Arrays are zero-indexed.
+    //  $operations[] = array(
+    //    'dropbox_gallery_batch_refresh_file',
+    //    array(
+    //      $filesDir,
+    //      $photo,
+    //      t('Processing image @name: @curr out of @total', array(
+    //        '@name' => Dropbox\Path::getName($photo['path']),
+    //        '@curr' => $index,
+    //        '@total' => $total,
+    //      )),
+    //      $index / $total,
+    //    ),
+    //  );
+    //}
 
     // Create derivatives as a batch operation and return to the admin page.
     batch_set(array(
-      'operations' => $operations,
-      'finished' => 'dropbox_gallery_batch_finished',
+      'operations' => array(
+        'dropbox_gallery_batch_refresh_file',
+        array(
+          $filesDir,
+          $photos,
+        )
+      ),
+      'finished' => 'dropbox_gallery_batch_refresh_finished',
     ));
     batch_process('admin/config/media/dropbox_gallery');
   }

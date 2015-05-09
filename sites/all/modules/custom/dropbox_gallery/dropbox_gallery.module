@@ -182,39 +182,70 @@ function dropbox_gallery_refresh_confirm_submit($form, &$form_state) {
 }
 
 /**
- * Creates derivative images for a single Dropbox file. Used with the Batch API.
+ * Implements callback_batch_operation.
+ *
+ * Creates derivative images for a single Dropbox file.
+ *
+ * @param $filesDir string
+ *   Gallery root directory on the local server.
+ *
+ * @param $photo array
+ *   Dropbox metadata for the photo to be processed.
+ *
+ * @param $status string
+ *   User-facing status message.
+ *
+ * @param $completed float
+ *   Number between 0 and 1 indicating how many images have been processed.
+ *
+ * @param $context array
+ *   Batch API context variable.
+ *
  */
-function dropbox_gallery_batch_refresh_file($filesDir, $photo, $status, &$context) {
-  if (empty($context['sandbox']['gallery'])) {
-    $context['sandbox']['gallery'] = serialize(_dropbox_gallery_get_gallery_object());
-  }
+//function dropbox_gallery_batch_refresh_file($filesDir, $photo, $status, $completed, &$context) {
+function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
   if (!isset($context['results'])) {
     $context['results']['errors'] = array();
     $context['results']['successes'] = array();
   }
 
+  if (empty($context['sandbox']['gallery'])) {
+    $gallery = _dropbox_gallery_get_gallery_object();
+  }
+  else {
+    // Ensure the DropboxGallery and DropboxApp classes are in scope before
+    // unserializing. We could avoid this by using a proper autoloader.
+    include_once drupal_get_path('module', 'dropbox_gallery') . '/DropboxGallery.php';
+    include_once drupal_get_path('module', 'dropbox_app') . '/DropboxApp.php';
+    require_once conf_path() . '/../all/libraries/dropbox_sdk/lib/Dropbox/autoload.php';
+
+    // Get gallery object from the previous batch execution.
+    $gallery = unserialize($context['sandbox']['gallery']);
+  }
+
   // Update text under the progress bar.
   $context['message'] = $status;
 
-  // Get gallery object from the previous batch execution.
-  $gallery = unserialize($context['sandbox']['gallery']);
-  dd($gallery, 'gallery');
+  dd('refreshing ' . $photo['path'] . ': ' . $completed);
 
   if (!$gallery->refreshSingle($filesDir, $photo)) {
     $context['results']['errors'][] = $gallery->getError();
   }
   else {
-    $context['results']['successes'] = t('Successfully created derivative images for @photo', array('@photo' => $photo['path']));
+    $context['results']['successes'][] = t('Successfully created derivative images for @photo', array('@photo' => $photo['path']));
   }
 
   // Save gallery object for the next go-round.
   $context['sandbox']['gallery'] = serialize($gallery);
+
+  // Set progress.
+  $context['finished'] = $completed;
 }
 
 /**
  * Implements callback_batch_finished.
  */
-function dropbox_gallery_batch_finished($success, $results, $operations) {
+function dropbox_gallery_batch_refresh_finished($success, $results, $operations) {
   if ($success) {
     drupal_set_message(t('Successfully processed @count images. Your gallery is ready for viewing!', array(
       '@count' => count($results['successes']),
@@ -222,7 +253,9 @@ function dropbox_gallery_batch_finished($success, $results, $operations) {
   }
   else {
     $message = t('There was one or more errors processing the images for this gallery.');
-    $message .= theme('item_list', array('items' => $results['errors']));
+    if (!empty($results['errors'])) {
+      $message .= theme('item_list', array('items' => $results['errors']));
+    }
     drupal_set_message($message, 'error');
   }
 }

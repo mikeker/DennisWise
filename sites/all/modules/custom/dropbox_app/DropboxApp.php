@@ -63,6 +63,7 @@ class DropboxApp {
   protected $client;
 
   public function __construct($clientId, $redirectUri) {
+    dd('creating DropboxApp');
     $this->clientId = $clientId;
     $this->redirectUri = $redirectUri;
 
@@ -71,11 +72,7 @@ class DropboxApp {
     global $user;
     $this->drupalUser = $user->uid;
 
-    // Load the Dropbox SDK library.
-    $library = libraries_load('dropbox_sdk');
-    if (!$library || empty($library['loaded'])) {
-      throw new Exception($library['error message']);
-    }
+    $this->loadLibrary();
 
     // Collect App information. Note: even though the Dropbox API says it's
     // loading "fromJSON," it's actually using the output from json_decode(),
@@ -87,6 +84,28 @@ class DropboxApp {
 
     $csrfTokenStore = new Dropbox\ArrayEntryStore($_SESSION, 'dropbox-auth-csrf-token');
     $this->webAuth = new Dropbox\WebAuth($this->appInfo, $this->clientId, $this->redirectUri, $csrfTokenStore);
+  }
+
+  /**
+   * Ensures the Dropbox SDK is available when unserializing this object.
+   *
+   * @throws \Exception
+   */
+  public function __wakeup() {
+    dd('waking up DropboxApp');
+    $this->loadLibrary();
+  }
+
+  /**
+   * Loads the Dropbox SDK library.
+   *
+   * @throws \Exception
+   */
+  protected function loadLibrary() {
+    $library = libraries_load('dropbox_sdk');
+    if (!$library || empty($library['loaded'])) {
+      throw new Exception($library['error message']);
+    }
   }
 
   /**
