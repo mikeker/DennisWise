@@ -109,7 +109,7 @@ class DropboxGallery extends DropboxApp {
    */
   protected function getGalleryDirectory($gallery_name) {
     trim($gallery_name, '/');
-    return drupal_realpath('public://') . '/drupal-image-gallery/' . $gallery_name;
+    return drupal_realpath('public://') . '/dropbox-image-gallery/' . $this->drupalUser . '/' . $gallery_name;
   }
 
   /**
@@ -127,6 +127,13 @@ class DropboxGallery extends DropboxApp {
     );
   }
 
+  /**
+   * Returns an array of image styles associated with each derivative name.
+   *
+   * @return array
+   *
+   * @TODO: Make this admin configurable.
+   */
   protected function getDerivativeStyles() {
     return array(
       'thumbnails' => 'photo_small',
@@ -147,8 +154,10 @@ class DropboxGallery extends DropboxApp {
    */
   public function prepareDirectories($gallery_name) {
     $root = $this->getGalleryDirectory($gallery_name);
+    dd("preparing directories for $root...");
 
     foreach (array($root) + $this->getDerivativeDirectories($gallery_name) as $dir) {
+      dd("making $dir");
       if (!file_prepare_directory($dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
         $this->error = t('Unable to create %dir', array('%dir' => $dir));
         return FALSE;
@@ -193,22 +202,25 @@ class DropboxGallery extends DropboxApp {
       return FALSE;
     }
 
-    // Limit the list to photos.
+    // Limit the list to JPEG photos.
     $photos = array();
     foreach ($files['contents'] as $file) {
       if ('image/jpeg' == $file['mime_type']) {
         $photos[] = $file;
       }
     }
+    if (empty($photos)) {
+      $this->error = t('There are no photos in this image gallery. Dropbox Gallery only works with JPEG images.');
+      return FALSE;
+    }
 
-    $this->deleteGalleryDirectories($folder['path']);
-    if (!$this->prepareDirectories($folder['path'])) {
+    $this->deleteGalleryDirectories($gallery_name);
+    if (!$this->prepareDirectories($gallery_name)) {
       // $this->error is set by prepareDirectory.
       return FALSE;
     }
 
     // Create derivatives as a batch operation and return to the admin page.
-    // @TODO: need to deal with changes to originals on Dropbox.
     // @TODO: handle difference between Windows and Linux filenames.
     batch_set(array(
       'operations' => array(
@@ -223,38 +235,42 @@ class DropboxGallery extends DropboxApp {
   /**
    * Used by the Batch API to download and create derivatives of a single file.
    *
-   * @param $filesDir
+   * @param $gallery_name
    *   String containing the path to the main gallery folder. E.g.:
-   *   /var/www/sites/default/files/drupal-image-gallery/gallery-name
+   *   /var/www/sites/default/files/drupal-image-gallery/uid/gallery-name
    * @param $photo
    *   Dropbox file metadata array.
    *
    * @see https://www.dropbox.com/developers/core/docs#metadata-details
    */
-  public function refreshSingle($filesDir, $photo) {
+  public function refreshSingle($gallery_name, $photo) {
     $baseFilename = Dropbox\Path::getName($photo['path']);
-    $originalPath = "$filesDir/$baseFilename";
+    $originalPath = $this->getGalleryDirectory($gallery_name) . '/' . $baseFilename;
+    dd("downloading to $originalPath");
     if ($f = fopen($originalPath, 'w')) {
       $folder = $this->getClient()->getFile($photo['path'], $f);
       fclose($f);
     }
     else {
+      dd('unable to open file');
       $this->error = t('Unable to open %file', array('%file' => $originalPath));
       return FALSE;
     }
-    $imagesMeta[$baseFilename] = $folder;
 
-    // Generate thumbnail and "full"-sized derivatives. (The full-sized image
-    // saved here is not the full-sized image from Dropbox, but rather a down-
-    // rez'ed image that is shown when the visitor clicks on a thumbnail.
-    // Unfortunate terminology...
-    // NOTE: Generate the large image first, if there is an error then the
-    // thumbnail will not be generated, reducing our chances of 404's when
-    // clicking through to the larger version.
-    // @TODO: configurable sizing options and folder names.
-    if (!image_style_create_derivative('photo_large', $originalPath, $filesDir . '/full/' . $baseFilename) ||
-      !image_style_create_derivative('photo_small', $originalPath, $filesDir . '/thumbnails/' . $baseFilename)) {
-      $this->error .= 'There was an error generating derivatives for ' . $baseFilename . '.<br />';
+    // Generate derivative images based on what is defined by
+    // getDerivativeStyles(). This allows for easy expansion in case we want
+    // more than just thumbnails and full-sized images.
+    $styles = $this->getDerivativeStyles();
+    foreach($this->getDerivativeDirectories($gallery_name) as $derivative => $dir) {
+      dd("Generating style for $derivative: " . $styles[$derivative] . " to $dir/$baseFilename");
+      if (!image_style_create_derivative($styles[$derivative], $originalPath, "$dir/$baseFilename")) {
+        dd('error');
+        $this->error = t('There was an error generating the %style derivative for %file.<br />', array(
+          '%style' => $styles[$derivative],
+          '%file' => $baseFilename,
+        ));
+        return FALSE;
+      }
     }
 
     // Delete the original downloaded from Dropbox -- we only care about the
@@ -264,6 +280,7 @@ class DropboxGallery extends DropboxApp {
       // unable to be deleted.
       watchdog('Dropbox Gallery', 'Unable to delete the downloaded file: %file', array('%file' => $originalPath));
     }
+
     return TRUE;
   }
 

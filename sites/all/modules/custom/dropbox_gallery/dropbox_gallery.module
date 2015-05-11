@@ -300,12 +300,11 @@ function dropbox_gallery_admin() {
  * @TODO: Turn this into a proper theme function.
  */
 function dropbox_gallery_view($uid, $gallery_name) {
-  $gallery = _dropbox_gallery_get_gallery_object($uid);
-  return $gallery->view($gallery_name);
+  //$gallery = _dropbox_gallery_get_gallery_object($uid);
+  //return $gallery->view($gallery_name);
 }
 
 function dropbox_gallery_test() {
   $gallery = _dropbox_gallery_get_gallery_object();
-  dpr($gallery->getGalleryDirectory('foo bar baz'));
   dpr('in test'); exit;
 }
