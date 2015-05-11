@@ -100,6 +100,41 @@ class DropboxGallery extends DropboxApp {
   }
 
   /**
+   * Returns the full path on the local server to the files containing the
+   * specified gallery, without any trailing slash.
+   *
+   * @param $gallery_name
+   *
+   * @return string
+   */
+  protected function getGalleryDirectory($gallery_name) {
+    trim($gallery_name, '/');
+    return drupal_realpath('public://') . '/drupal-image-gallery/' . $gallery_name;
+  }
+
+  /**
+   * Returns an array of full paths to the derivative image directories.
+   *
+   * @param $gallery_name
+   *
+   * @return array
+   */
+  public function getDerivativeDirectories($gallery_name) {
+    $root = $this->getGalleryDirectory($gallery_name);
+    return array(
+      'thumbnails' => $root . '/thumbnails',
+      'full' => $root . '/full',
+    );
+  }
+
+  protected function getDerivativeStyles() {
+    return array(
+      'thumbnails' => 'photo_small',
+      'full' => 'photo_large',
+    );
+  }
+
+  /**
    * Build the local gallery directories if they don't already exist.
    *
    * @param $gallery_name
@@ -111,22 +146,20 @@ class DropboxGallery extends DropboxApp {
    * @TODO: Deal with out-of-bounds characters and Win/Linux/Mac naming issues.
    */
   public function prepareDirectories($gallery_name) {
-    $filesDir = drupal_realpath('public://') . '/drupal-image-gallery' . $gallery_name;
-    foreach (array('', 'thumbnails', 'full') as $subDir) {
-      $dir = $filesDir;
-      if (!empty($subDir)) {
-        $dir = "$filesDir/$subDir";
-      }
+    $root = $this->getGalleryDirectory($gallery_name);
+
+    foreach (array($root) + $this->getDerivativeDirectories($gallery_name) as $dir) {
       if (!file_prepare_directory($dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
-        $this->error = t('Unable to create %dir', array('%dir' => $filesDir));
+        $this->error = t('Unable to create %dir', array('%dir' => $dir));
         return FALSE;
       }
     }
-    return $filesDir;
+
+    return $root;
   }
 
   /**
-   * Deletes all lcoal copies of a given gallery's images.
+   * Deletes all local copies of a given gallery's images.
    *
    * @param $gallery_name
    *   Gallery name (folder name) from Dropbox.
@@ -134,22 +167,22 @@ class DropboxGallery extends DropboxApp {
    * @return bool
    */
   public function deleteGalleryDirectories($gallery_name) {
-    $filesDir = drupal_realpath('public://') . '/drupal-image-gallery' . $gallery_name;
+    $filesDir = $this->getGalleryDirectory($gallery_name);
     return file_unmanaged_delete_recursive($filesDir);
   }
 
   /**
    * Builds or refreshes the full/thumbnail images.
    *
-   * @param $gallery
+   * @param $gallery_name
    *
    * @return bool
    *   TRUE on success, FALSE otherwise.
    */
-  public function refresh($gallery) {
-    $folder = $this->getFolderMeta($gallery);
+  public function refresh($gallery_name) {
+    $folder = $this->getFolderMeta($gallery_name);
     if (empty($folder)) {
-      $this->error = t('Could not find a Dropbox folder associated with %gallery', array('%gallery' => $gallery));
+      $this->error = t('Could not find a Dropbox folder associated with %gallery', array('%gallery' => $gallery_name));
       return FALSE;
     }
 
@@ -169,7 +202,7 @@ class DropboxGallery extends DropboxApp {
     }
 
     $this->deleteGalleryDirectories($folder['path']);
-    if (!$filesDir = $this->prepareDirectories($folder['path'])) {
+    if (!$this->prepareDirectories($folder['path'])) {
       // $this->error is set by prepareDirectory.
       return FALSE;
     }
@@ -179,16 +212,16 @@ class DropboxGallery extends DropboxApp {
     // @TODO: handle difference between Windows and Linux filenames.
     batch_set(array(
       'operations' => array(
-        array('dropbox_gallery_batch_refresh_file', array($filesDir, $photos))
+        array('dropbox_gallery_batch_refresh_file', array($gallery_name, $photos))
       ),
-      'progress_message' => t('Creating local copies of the photos in %gallery', array('%gallery' => $gallery)),
+      'progress_message' => t('Creating local copies of the photos in %gallery', array('%gallery' => $gallery_name)),
       'finished' => 'dropbox_gallery_batch_refresh_finished',
     ));
     batch_process('admin/config/media/dropbox_gallery');
   }
 
   /**
-   * Used by the Batch API to download create derivatives of a single file.
+   * Used by the Batch API to download and create derivatives of a single file.
    *
    * @param $filesDir
    *   String containing the path to the main gallery folder. E.g.:
@@ -244,6 +277,13 @@ class DropboxGallery extends DropboxApp {
    *
    * @return string
    *   HTML
+   *
+   * @TODO: Refactor to return just the images array -- have the module file
+   * pass that along to a theme function/template.
+   *
+   * @TODO: How to handle when user deletes the Dropbox folder. Do we still show
+   * the gallery as long as we have the local derivative files? Currently we do
+   * not...
    */
   public function view($uid, $gallery) {
     if (is_object($uid)) {
@@ -254,11 +294,15 @@ class DropboxGallery extends DropboxApp {
       drupal_not_found();
     }
 
-    $folder = dropbox_gallery_get_folder($gallery);
+    $gallery = _dropbox_gallery_get_gallery_object($uid);
+    $folder = $gallery->getFolderMeta($gallery);
     if (empty($folder)) {
       drupal_set_message(t('The specified gallery %gallery cannot be found', array('%gallery' => $gallery)));
       drupal_not_found();
     }
+
+    dpr($folder);
+    exit;
 
 
     $output = '<ul><li>';

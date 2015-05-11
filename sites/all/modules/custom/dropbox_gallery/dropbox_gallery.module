@@ -74,12 +74,12 @@ function dropbox_gallery_menu() {
   );
 
   // Debugging:
-  //$items['test'] = array(
-  //  'title' => 'test',
-  //  'page callback' => 'dropbox_gallery_test',
-  //  'type' => MENU_CALLBACK,
-  //  'access callback' => TRUE,
-  //);
+  $items['test'] = array(
+    'title' => 'test',
+    'page callback' => 'dropbox_gallery_test',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
 
   return $items;
 }
@@ -186,7 +186,7 @@ function dropbox_gallery_refresh_confirm_submit($form, &$form_state) {
  *
  * Creates derivative images for a single Dropbox file.
  *
- * @param $filesDir string
+ * @param $gallery_name string
  *   Gallery root directory on the local server.
  *
  * @param $photo array
@@ -203,7 +203,7 @@ function dropbox_gallery_refresh_confirm_submit($form, &$form_state) {
  *
  */
 //function dropbox_gallery_batch_refresh_file($filesDir, $photo, $status, $completed, &$context) {
-function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
+function dropbox_gallery_batch_refresh_file($gallery_name, $photos, &$context) {
   if (!isset($context['sandbox']['photos'])) {
     // This is the first time through the batch, setup context variables to be
     // used by the rest of the batch processes.
@@ -211,7 +211,6 @@ function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
     $context['results']['successes'] = array();
 
     $gallery = _dropbox_gallery_get_gallery_object();
-    $context['sandbox']['photos'] = $photos;
     $index = 0;
   }
   else {
@@ -223,7 +222,6 @@ function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
 
     // Get gallery object from the previous batch execution.
     $gallery = unserialize($context['sandbox']['gallery']);
-    $photos = $context['sandbox']['photos'];
     $index = $context['sandbox']['index'];
   }
 
@@ -237,7 +235,7 @@ function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
     '@total' => count($photos),
   ));
 
-  if (!$gallery->refreshSingle($filesDir, $photo)) {
+  if (!$gallery->refreshSingle($gallery_name, $photo)) {
     $context['results']['errors'][] = $gallery->getError();
   }
   else {
@@ -292,12 +290,14 @@ function dropbox_gallery_admin() {
 }
 
 /**
- * Callback to view a gallery of a give Drupal user
+ * Callback to view a gallery of a give Drupal user.
  *
  * @param $uid
  * @param $gallery_name
  *
  * @return HTML
+ *
+ * @TODO: Turn this into a proper theme function.
  */
 function dropbox_gallery_view($uid, $gallery_name) {
   $gallery = _dropbox_gallery_get_gallery_object($uid);
@@ -305,5 +305,7 @@ function dropbox_gallery_view($uid, $gallery_name) {
 }
 
 function dropbox_gallery_test() {
+  $gallery = _dropbox_gallery_get_gallery_object();
+  dpr($gallery->getGalleryDirectory('foo bar baz'));
   dpr('in test'); exit;
 }
