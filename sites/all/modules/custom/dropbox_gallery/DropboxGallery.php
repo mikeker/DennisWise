@@ -285,24 +285,22 @@ class DropboxGallery extends DropboxApp {
   }
 
   /**
-   * Displays a Dropbox gallery owned by a specied user.
+   * Returns an array of derivative images to be used in this gallery.
    *
    * @param $uid
    *   UID or user object of the gallery owner. They must have authorized the
    *   Dropbox app with their Dropbox account.
-   * @param $gallery
+   * @param $gallery_name
+   *   Gallery name
    *
-   * @return string
-   *   HTML
-   *
-   * @TODO: Refactor to return just the images array -- have the module file
-   * pass that along to a theme function/template.
+   * @return array of arrays
+   *   Should hold at least the keys "thumbnails" and "full". Those keys will
+   *   be arrays in the form of filename => url_to_image.
    *
    * @TODO: How to handle when user deletes the Dropbox folder. Do we still show
-   * the gallery as long as we have the local derivative files? Currently we do
-   * not...
-   */
-  public function view($uid, $gallery) {
+   * the gallery as long as we have the local derivative files? Currently we
+   * show images based on the cached local derivatives.
+  public function view($uid, $gallery_name) {
     if (is_object($uid)) {
       $uid = $uid->uid;
     }
@@ -312,9 +310,9 @@ class DropboxGallery extends DropboxApp {
     }
 
     $gallery = _dropbox_gallery_get_gallery_object($uid);
-    $folder = $gallery->getFolderMeta($gallery);
+    $folder = $gallery->getFolderMeta($gallery_name);
     if (empty($folder)) {
-      drupal_set_message(t('The specified gallery %gallery cannot be found', array('%gallery' => $gallery)));
+      drupal_set_message(t('The specified gallery %gallery cannot be found', array('%gallery' => $gallery_name)));
       drupal_not_found();
     }
 
@@ -328,5 +326,6 @@ class DropboxGallery extends DropboxApp {
 
     return $output;
   }
+   */
 
 }

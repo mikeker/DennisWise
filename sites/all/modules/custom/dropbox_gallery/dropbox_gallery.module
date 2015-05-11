@@ -85,6 +85,18 @@ function dropbox_gallery_menu() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function dropbox_gallery_theme($existing, $type, $theme, $path) {
+  return array(
+    'dropbox_gallery' => array(
+      'template' => 'dropbox-gallery',
+      'variables' => array('images' => NULL, 'derivatives' => NULL, 'gallery_name' => NULL),
+    ),
+  );
+}
+
+/**
  * Internal function to bridge the gap between classes and Drupal 7's callback-
  * based API. Stores an instantiated DropboxGallery object for the lifetime of
  * this page request.
@@ -293,15 +305,27 @@ function dropbox_gallery_admin() {
  * Callback to view a gallery of a give Drupal user.
  *
  * @param $uid
+ *   Drupal user ID of the owner of this gallery.
+ *
  * @param $gallery_name
+ *   The gallery name.
  *
  * @return HTML
- *
- * @TODO: Turn this into a proper theme function.
  */
 function dropbox_gallery_view($uid, $gallery_name) {
-  //$gallery = _dropbox_gallery_get_gallery_object($uid);
-  //return $gallery->view($gallery_name);
+  $gallery = _dropbox_gallery_get_gallery_object($uid);
+  $output = array();
+  foreach ($gallery->getDerivativeDirectories($gallery_name) as $derivative => $dir) {
+    $output[$derivative] = array();
+    foreach(file_scan_directory($dir, '/.*\.(jpg|jpeg)$/') as $path => $info) {
+      $output[$derivative][] = file_create_url(str_replace(DRUPAL_ROOT, '', $path));
+    }
+  }
+  return theme('dropbox_gallery', array(
+    'images' => $output,
+    'derivatives' => array_keys($output),
+    'gallery_name' => $gallery_name,
+  ));
 }
 
 function dropbox_gallery_test() {
