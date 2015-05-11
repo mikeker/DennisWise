@@ -154,10 +154,8 @@ class DropboxGallery extends DropboxApp {
    */
   public function prepareDirectories($gallery_name) {
     $root = $this->getGalleryDirectory($gallery_name);
-    dd("preparing directories for $root...");
 
     foreach (array($root) + $this->getDerivativeDirectories($gallery_name) as $dir) {
-      dd("making $dir");
       if (!file_prepare_directory($dir, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
         $this->error = t('Unable to create %dir', array('%dir' => $dir));
         return FALSE;
@@ -246,13 +244,11 @@ class DropboxGallery extends DropboxApp {
   public function refreshSingle($gallery_name, $photo) {
     $baseFilename = Dropbox\Path::getName($photo['path']);
     $originalPath = $this->getGalleryDirectory($gallery_name) . '/' . $baseFilename;
-    dd("downloading to $originalPath");
     if ($f = fopen($originalPath, 'w')) {
       $folder = $this->getClient()->getFile($photo['path'], $f);
       fclose($f);
     }
     else {
-      dd('unable to open file');
       $this->error = t('Unable to open %file', array('%file' => $originalPath));
       return FALSE;
     }
@@ -262,9 +258,12 @@ class DropboxGallery extends DropboxApp {
     // more than just thumbnails and full-sized images.
     $styles = $this->getDerivativeStyles();
     foreach($this->getDerivativeDirectories($gallery_name) as $derivative => $dir) {
-      dd("Generating style for $derivative: " . $styles[$derivative] . " to $dir/$baseFilename");
-      if (!image_style_create_derivative($styles[$derivative], $originalPath, "$dir/$baseFilename")) {
-        dd('error');
+
+      // @TODO: remove
+      dd("Generating style for $derivative: " . $styles[$derivative] . " for $baseFilename");
+
+      if (!image_style_create_derivative(image_style_load($styles[$derivative]), $originalPath, "$dir/$baseFilename")) {
+        dd('unable to create image derivative');
         $this->error = t('There was an error generating the %style derivative for %file.<br />', array(
           '%style' => $styles[$derivative],
           '%file' => $baseFilename,

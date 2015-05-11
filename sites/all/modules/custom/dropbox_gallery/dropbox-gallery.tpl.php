@@ -12,7 +12,6 @@
  * $gallery_name string
  *   The name of the gallery.
  */
-dsm($images);
 ?>
 <h1><?php print $gallery_name; ?></h1>
 <ul>
