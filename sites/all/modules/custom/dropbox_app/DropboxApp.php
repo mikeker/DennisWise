@@ -63,7 +63,6 @@ class DropboxApp {
   protected $client;
 
   public function __construct($clientId, $redirectUri) {
-    dd('creating DropboxApp');
     $this->clientId = $clientId;
     $this->redirectUri = $redirectUri;
 
@@ -92,7 +91,6 @@ class DropboxApp {
    * @throws \Exception
    */
   public function __wakeup() {
-    dd('waking up DropboxApp');
     $this->loadLibrary();
   }
 
