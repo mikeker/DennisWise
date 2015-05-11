@@ -12,10 +12,11 @@
  * $gallery_name string
  *   The name of the gallery.
  */
+dsm($images);
 ?>
 <h1><?php print $gallery_name; ?></h1>
 <ul>
   <?php foreach($images['thumbnails'] as $index => $url) : ?>
-     <li><a href="<?php $images['full'][$index]?>"><img src="<?php print $url; ?>" /></a></li>
+     <li><a href="<?php print $images['full'][$index]; ?>"><img src="<?php print $url; ?>" /></a></li>
   <?php endforeach; ?>
 </ul>
