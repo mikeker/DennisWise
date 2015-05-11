@@ -96,7 +96,7 @@ function dropbox_gallery_menu() {
  *
  * @return DropboxGallery
  */
-function _dropbox_gallery_get_gallery_object($uid) {
+function _dropbox_gallery_get_gallery_object($uid = NULL) {
   static $gallery = array();
 
   // Ensure $uid is a UID, not a user object. Defaults to the current user if
@@ -204,13 +204,15 @@ function dropbox_gallery_refresh_confirm_submit($form, &$form_state) {
  */
 //function dropbox_gallery_batch_refresh_file($filesDir, $photo, $status, $completed, &$context) {
 function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
-  if (!isset($context['results'])) {
+  if (!isset($context['sandbox']['photos'])) {
+    // This is the first time through the batch, setup context variables to be
+    // used by the rest of the batch processes.
     $context['results']['errors'] = array();
     $context['results']['successes'] = array();
-  }
 
-  if (empty($context['sandbox']['gallery'])) {
     $gallery = _dropbox_gallery_get_gallery_object();
+    $context['sandbox']['photos'] = $photos;
+    $index = 0;
   }
   else {
     // Ensure the DropboxGallery and DropboxApp classes are in scope before
@@ -221,12 +223,19 @@ function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
 
     // Get gallery object from the previous batch execution.
     $gallery = unserialize($context['sandbox']['gallery']);
+    $photos = $context['sandbox']['photos'];
+    $index = $context['sandbox']['index'];
   }
 
-  // Update text under the progress bar.
-  $context['message'] = $status;
+  // This is the image we'll work with on this time through the process.
+  $photo = $photos[$index++];
 
-  dd('refreshing ' . $photo['path'] . ': ' . $completed);
+  // Update text under the progress bar.
+  $context['message'] = t('Processing image @name: @curr out of @total', array(
+    '@name' => Dropbox\Path::getName($photo['path']),
+    '@curr' => $index,
+    '@total' => count($photos),
+  ));
 
   if (!$gallery->refreshSingle($filesDir, $photo)) {
     $context['results']['errors'][] = $gallery->getError();
@@ -237,9 +246,11 @@ function dropbox_gallery_batch_refresh_file($filesDir, $photos, &$context) {
 
   // Save gallery object for the next go-round.
   $context['sandbox']['gallery'] = serialize($gallery);
+  $context['sandbox']['photos'] = $photos;
+  $context['sandbox']['index'] = $index;
 
   // Set progress.
-  $context['finished'] = $completed;
+  $context['finished'] = $index / count($photos);
 }
 
 /**
