@@ -91,9 +91,30 @@ function dropbox_gallery_theme($existing, $type, $theme, $path) {
   return array(
     'dropbox_gallery' => array(
       'template' => 'dropbox-gallery',
-      'variables' => array('images' => NULL, 'derivatives' => NULL, 'gallery_name' => NULL),
+      'variables' => array('images' => NULL, 'meta' => NULL, 'derivatives' => NULL, 'gallery_name' => NULL),
     ),
   );
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function dropbox_gallery_libraries_info() {
+  $libraries['PhotoSwipe'] = array(
+    'name' => 'PhotoSwipe',
+    'vendor url' => 'https://github.com/dimsemenov/photoswipe',
+    'version arguments' => array(
+      'file' => 'dist/photoswipe.js',
+      'pattern' => '/ - v(\d*\.\d*\.\d*) - /',
+      'lines' => 2,
+    ),
+    'files' => array(
+      'js' => array('dist/photoswipe.min.js', 'dist/photoswipe-ui-default.min.js'),
+      'css' => array('dist/photoswipe.css', 'dist/default-skin/default-skin.css'),
+    ),
+  );
+
+  return $libraries;
 }
 
 /**
@@ -315,14 +336,34 @@ function dropbox_gallery_admin() {
 function dropbox_gallery_view($uid, $gallery_name) {
   $gallery = _dropbox_gallery_get_gallery_object($uid);
   $output = array();
+
+  // Collects metadata about the full-sized images.
+  $meta = array();
+
   foreach ($gallery->getDerivativeDirectories($gallery_name) as $derivative => $dir) {
     $output[$derivative] = array();
     foreach(file_scan_directory($dir, '/.*\.(jpg|jpeg)$/') as $path => $info) {
       $output[$derivative][] = file_create_url(str_replace(DRUPAL_ROOT, '', $path));
+      $extras = NULL;
+      $filesize = getimagesize($path, $extras);
+      $meta[$derivative][] = array(
+        'width' => $filesize[0],
+        'height' => $filesize[1],
+      );
     }
   }
+
+  // Load PhotoSwipe library for gallery functionality.
+  $library = libraries_load('PhotoSwipe');
+  if (!$library || empty($library['loaded'])) {
+    throw new Exception($library['error message']);
+  }
+
+  drupal_add_js(drupal_get_path('module', 'dropbox_gallery') . '/dropbox_gallery.js');
+
   return theme('dropbox_gallery', array(
     'images' => $output,
+    'meta' => $meta,
     'derivatives' => array_keys($output),
     'gallery_name' => $gallery_name,
   ));

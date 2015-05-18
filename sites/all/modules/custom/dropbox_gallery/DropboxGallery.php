@@ -134,7 +134,7 @@ class DropboxGallery extends DropboxApp {
    *
    * @TODO: Make this admin configurable.
    */
-  protected function getDerivativeStyles() {
+  public function getDerivativeStyles() {
     return array(
       'thumbnails' => 'photo_small',
       'full' => 'photo_large',
